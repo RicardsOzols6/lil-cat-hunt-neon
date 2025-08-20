@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Name the Cats 🐾</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .cat { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>🐱 Emyl’s Cat Naming Panel</h1>
+  <div id="cats"></div>
+
+  <script>
+    async function loadCats() {
+      const res = await fetch("/.netlify/functions/list-cats");
+      const data = await res.json();
+      const container = document.getElementById("cats");
+      container.innerHTML = "";
+
+      data.cats.forEach(cat => {
+        const div = document.createElement("div");
+        div.className = "cat";
+        div.innerHTML = `
+          <b>Color:</b> ${cat.color} <br>
+          <b>Location:</b> ${cat.location} <br>
+          <input id="name-${cat.id}" placeholder="Enter name" value="${cat.name || ""}">
+          <button onclick="saveName(${cat.id})">Save</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function saveName(id) {
+      const input = document.getElementById(`name-${id}`);
+      await fetch("/.netlify/functions/name-cat", {
+        method: "POST",
+        body: JSON.stringify({ id, name: input.value })
+      });
+      loadCats();
+    }
+
+    loadCats();
+  </script>
+</body>
+</html>
