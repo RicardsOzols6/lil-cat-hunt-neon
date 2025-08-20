@@ -10,24 +10,19 @@
     .wrap{max-width:960px;margin:0 auto;padding:24px;}
     .card{background:var(--card);border:2px solid #fecdd3;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .row-right{margin-left:auto;display:flex;gap:8px}
     .title{font-size:20px;font-weight:700;margin:0 0 6px 0;display:flex;gap:8px;align-items:center}
     .muted{color:var(--muted);font-size:12px}
     .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;background:#f1f5f9}
     .btn.primary{background:var(--accent);color:white}
-    .btn.danger{background:#ef4444;color:white}
     .btn.outline{background:white;border:2px solid #e2e8f0}
-    input[type=text],input[type=number]{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;width:100%;font:inherit}
-    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-    @media (max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     .progress{height:10px;border-radius:999px;background:#ffe4e6;overflow:hidden}
     .bar{height:100%;background:#e879f9;width:0%}
     .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
     .li{background:#ffffffb3;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
     .catrow{background:#ffffffb3;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
     .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#f1f5f9}
-    .emoji{font-size:22px}
     .banner{background:#fee2e2;border:2px solid #fecaca;color:#7f1d1d;padding:10px 12px;border-radius:12px;margin-bottom:12px}
+    .ok{background:#dcfce7;border-color:#bbf7d0;color:#065f46}
   </style>
 </head>
 <body>
@@ -38,7 +33,7 @@
 
 <script>
 (function(){
-  // Call the function directly (skip /api redirect)
+  // Direct path to your Netlify function
   const FN_URL = "/.netlify/functions/game";
 
   const status = document.getElementById("status");
@@ -46,7 +41,7 @@
 
   function setStatus(msg, ok=false){
     status.innerHTML = msg
-      ? `<div class="banner" style="${ok?'background:#dcfce7;border-color:#bbf7d0;color:#065f46':''}">${msg}</div>`
+      ? `<div class="banner ${ok?'ok':''}">${msg}</div>`
       : "";
   }
 
@@ -57,7 +52,11 @@
       return r.json();
     },
     async save(state){
-      const r = await fetch(FN_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({state})});
+      const r = await fetch(FN_URL,{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({state})
+      });
       if(!r.ok) throw new Error("POST "+r.status);
       return r.json();
     }
@@ -76,7 +75,7 @@
   };
 
   let state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
-  let showFound=false, showAdd=false, tmpName="", tmpLoc="", newCatName="", note="", quickAdd=1;
+  let showFound=false, showAdd=false, tmpName="", tmpLoc="", newCatName="", quickAdd=1;
 
   function percent(){ return state.total>0? Math.round((state.found/state.total)*100) : 0; }
   function canIncFound(){ return state.found < state.total; }
@@ -84,15 +83,28 @@
   function canDecTotal(){ return state.total > state.found; }
   function addHist(h){ state.history = [{...h, when:new Date().toISOString()}, ...state.history].slice(0,200); }
 
+  function save(){
+    API.save(state).then(s=>{
+      state = {...state, ...s};
+      render();
+    }).catch(e=>{
+      console.error(e);
+      setStatus("Saved locally, but backend save failed. Open <code>/.netlify/functions/game</code> for details.", false);
+    });
+  }
+
   function render(){
     app.innerHTML="";
     app.append(
       el("div",{class:"card"},
-        el("div",{class:"title"},"😺 ", el("input",{type:"text",value:state.game_name,oninput:e=>{ state.game_name=e.target.value; save(); }}),
-          el("span",{class:"pill"},"Found ",state.found," / ",state.total)),
-        el("div",{class:"muted"},"Netlify Functions + Neon (Postgres)."),
+        el("div",{class:"title"},
+          "😺 ",
+          el("input",{type:"text",value:state.game_name,oninput:e=>{ state.game_name=e.target.value; save(); }}),
+          el("span",{class:"pill"},`Found ${state.found} / ${state.total}`)
+        ),
+        el("div",{class:"muted"},"Netlify Functions + Neon (Postgres). Shared board for both of you."),
         el("div",{class:"progress",style:{marginTop:"8px"}}, el("div",{class:"bar",style:{width:percent()+'%'}})),
-        el("div",{class:"grid",style:{marginTop:"8px"}},
+        el("div",{class:"row",style:{marginTop:"8px"}},
           el("button",{class:"btn primary",disabled:!canIncFound(),onclick:()=>{ showFound=true; render(); }},"🐾 Found one!"),
           el("button",{class:"btn",disabled:!canDecFound(),onclick:()=>{ state.found--; addHist({type:'found-',delta:-1}); save(); }},"↩️ Undo"),
           el("button",{class:"btn outline",onclick:()=>{ showAdd=true; render(); }},"➕ Add cat"),
@@ -146,8 +158,11 @@
       updateFromServer(data);
     } catch (e) {
       console.error(e);
-      setStatus("Could not reach the backend function. Open <code>/.netlify/functions/game</code> to see the error. If it says “Missing DATABASE_URL”, set NETLIFY_DATABASE_URL in Site → Project configuration → Environment variables.", false);
-      render(); // still show UI so it's usable if API is down
+      setStatus(
+        'Could not reach the backend function. Open <code>/.netlify/functions/game</code> to see the error. If it says “Missing DATABASE_URL”, set NETLIFY_DATABASE_URL in Site → Project configuration → Environment variables.',
+        false
+      );
+      render(); // still render the shell so you see something
     }
   }
 
