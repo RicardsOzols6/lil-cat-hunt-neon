@@ -1,101 +1,169 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lil Cat Hunt – Minimal</title>
+  <title>Lil Cat Hunt 🐾</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 16px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
-    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
-    input { padding: 8px 10px; border-radius: 8px; border: 1px solid #ddd; }
-    .ok { color:#065f46; background:#dcfce7; padding:8px 10px; border-radius:8px; }
-    .err { color:#7f1d1d; background:#fee2e2; padding:8px 10px; border-radius:8px; white-space:pre-wrap;}
-    .box { border:1px solid #eee; border-radius:10px; padding:12px; margin:12px 0;}
-    ul { padding-left: 18px; }
+    :root{
+      --bg1:#fff1f5; --bg2:#f3e8ff; --card:#ffffff; --txt:#0f172a; --muted:#64748b; --accent:#ec4899;
+      --ok:#dcfce7; --okb:#bbf7d0; --oktxt:#065f46; --err:#fee2e2; --errb:#fecaca; --errtxt:#7f1d1d;
+    }
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--txt);}
+    .wrap{max-width:980px;margin:0 auto;padding:24px;}
+    h1{margin:0 0 12px 0}
+    .card{background:var(--card);border:2px solid #fecdd3;border-radius:18px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .title{font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;gap:10px;align-items:center}
+    .muted{color:var(--muted);font-size:12px}
+    .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;background:#f1f5f9}
+    .btn.primary{background:var(--accent);color:white}
+    .btn.ghost{background:white;border:2px solid #e2e8f0}
+    select,input[type=text],input[type=number]{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;font:inherit}
+    .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#f1f5f9}
+    .progress{height:10px;border-radius:999px;background:#ffe4e6;overflow:hidden}
+    .bar{height:100%;background:#e879f9;width:0%}
+    .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+    .li{background:#ffffffb3;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .catrow{background:#ffffffb3;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
+    .ok{background:var(--ok);border:2px solid var(--okb);color:var(--oktxt);padding:10px 12px;border-radius:12px;margin-bottom:12px}
+    .err{background:var(--err);border:2px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
+    .section{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:900px){.section{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <h1>🐾 Lil Cat Hunt (Minimal)</h1>
-  <div id="status">Booting…</div>
+<div class="wrap">
+  <h1>🐾 Lil Cat Hunt</h1>
+  <div id="status"></div>
 
-  <div id="app" class="box" style="display:none">
-    <div><b id="title">Game</b> — <span id="score">0 / 0</span></div>
-    <div class="row">
-      <button id="found">🐾 Found one</button>
-      <button id="undo">↩️ Undo</button>
-      <button id="add">➕ Add cat</button>
-      <button id="remove">➖ Remove cat</button>
-    </div>
-    <div class="row">
-      <input id="many" type="number" min="1" value="1" style="width:90px" />
-      <button id="addmany">✨ Add many</button>
-    </div>
-    <h3>Activity</h3>
-    <ul id="log"></ul>
-    <h3>Hidden cats</h3>
-    <ul id="cats"></ul>
+  <div class="card">
+    <div class="title" id="headerTitle">Lil Cat Hunt <span class="pill" id="score">0 / 0</span></div>
+    <div class="muted">Shared scoreboard. Colors + locations map to names automatically.</div>
+    <div class="progress" style="margin-top:8px"><div class="bar" id="bar" style="width:0%"></div></div>
   </div>
+
+  <div class="section">
+    <div class="card">
+      <div class="title">Found a Cat</div>
+      <div class="row">
+        <select id="fColor">
+          <option>Black</option>
+          <option>Orange</option>
+          <option>Beige</option>
+        </select>
+        <select id="fLoc">
+          <option>Kitchen</option>
+          <option>Emyl’s Bathroom</option>
+          <option>Richards Bathroom</option>
+          <option>Emyl’s Room</option>
+          <option>Richards Room</option>
+          <option>Storage Room 1</option>
+          <option>Storage Room 2</option>
+          <option>Hallway</option>
+        </select>
+        <button class="btn primary" id="foundBtn">Count it 🐾</button>
+      </div>
+      <div class="muted" id="foundResult" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Add Cat</div>
+      <div class="row">
+        <select id="aColor">
+          <option>Black</option><option>Orange</option><option>Beige</option>
+        </select>
+        <select id="aLoc">
+          <option>Kitchen</option>
+          <option>Emyl’s Bathroom</option>
+          <option>Richards Bathroom</option>
+          <option>Emyl’s Room</option>
+          <option>Richards Room</option>
+          <option>Storage Room 1</option>
+          <option>Storage Room 2</option>
+          <option>Hallway</option>
+        </select>
+        <input id="aName" type="text" placeholder="Name (optional — auto if empty)" />
+        <button class="btn ghost" id="addBtn">Add</button>
+      </div>
+      <div class="muted">Total goes up when you add cats.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Activity</div>
+    <ul class="list" id="activity"></ul>
+  </div>
+
+  <div class="card">
+    <div class="title">Cat List</div>
+    <ul class="list" id="cats"></ul>
+  </div>
+</div>
 
 <script>
 (function(){
-  const FN_URL = "/.netlify/functions/game";     // direct function call
-
+  const FN = "/.netlify/functions/game";
   const $ = (id)=>document.getElementById(id);
-  const status = $("status"), app = $("app"), score = $("score"), title = $("title");
-  const log = $("log"), cats = $("cats");
+  const status = $("status");
+  const score = $("score");
+  const bar = $("bar");
+  const foundResult = $("foundResult");
+  const activity = $("activity");
+  const cats = $("cats");
 
-  const ui = {
-    showOk: (m)=> status.innerHTML = `<div class="ok">${m}</div>`,
-    showErr: (m)=> status.innerHTML = `<div class="err">${m}</div>`,
-    render(s){
-      app.style.display = "block";
-      title.textContent = s.game_name || "Lil Cat Hunt";
-      score.textContent = `${s.found} / ${s.total}`;
-      log.innerHTML = (s.history||[]).map(h=>`<li>${h.type} ${h.delta??""} — <small>${new Date(h.when).toLocaleString()}</small></li>`).join("") || "<li><i>none</i></li>";
-      cats.innerHTML = (s.hidden_cats||[]).map((c,i)=>`<li>${i < s.found ? "✅" : "❓"} ${c.name||("Cat #"+(i+1))}</li>`).join("") || "<li><i>none</i></li>";
-    }
-  };
+  const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
 
-  async function api(path, opts){
-    const r = await fetch(path, opts);
+  function uiStatus(ok, msg){
+    status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`;
+  }
+  function render(){
+    score.textContent = `${state.found} / ${state.total}`;
+    bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
+    activity.innerHTML = (state.history||[]).map(h=>`<li class="li"><div>${h.type==='found+'?'✅ Found':'➕ Added'} ${h.name?`<b>${escapeHTML(h.name)}</b>`:''} <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${new Date(h.when).toLocaleString()}</div></li>`).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
+    cats.innerHTML = (state.hidden_cats||[]).map((c,i)=>`<li class="catrow">${c.found?'✅':'❓'} <b>${escapeHTML(c.name||`Cat #${i+1}`)}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span></li>`).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
+  }
+  function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
+
+  async function api(body){
+    const r = await fetch(FN,{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
     const txt = await r.text();
-    try { return { ok:r.ok, json: JSON.parse(txt), raw: txt }; }
-    catch { return { ok:r.ok, json:null, raw:txt }; }
+    let json; try{ json = JSON.parse(txt) }catch{ json=null }
+    if(!r.ok) throw new Error(json?.error || txt || r.status);
+    return json;
+  }
+  async function load(){
+    uiStatus(true,"Connecting to database…");
+    const r = await fetch(FN);
+    const data = await r.json();
+    Object.assign(state, data);
+    uiStatus(true,"Connected ✓");
+    render();
   }
 
-  let state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
-
-  function saveAndRender(){
-    api(FN_URL, { method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify({ state }) })
-      .then(res=>{
-        if(!res.ok){ ui.showErr("POST failed:\n"+res.raw); return; }
-        state = res.json; ui.render(state);
-      })
-      .catch(e=> ui.showErr("POST error:\n"+(e?.message||e)));
-  }
-
-  // wire buttons
-  document.addEventListener("click",(e)=>{
-    const id = e.target.id;
-    if(id==="found"){ if(state.found < state.total){ state.found++; state.history=[{type:"found+",delta:1,when:new Date().toISOString()}, ...state.history]; saveAndRender(); } }
-    if(id==="undo"){ if(state.found>0){ state.found--; state.history=[{type:"found-",delta:-1,when:new Date().toISOString()}, ...state.history]; saveAndRender(); } }
-    if(id==="add"){ state.total++; state.hidden_cats=[...(state.hidden_cats||[]), {id:Date.now(), name:`Cat #${state.hidden_cats.length+1}`}]; state.history=[{type:"total+",delta:1,when:new Date().toISOString()}, ...state.history]; saveAndRender(); }
-    if(id==="remove"){ if(state.total>state.found){ state.total--; state.hidden_cats=(state.hidden_cats||[]).slice(0,-1); state.history=[{type:"total-",delta:-1,when:new Date().toISOString()}, ...state.history]; saveAndRender(); } }
-    if(id==="addmany"){ const n = parseInt($("many").value,10); if(n>0){ for(let i=0;i<n;i++){ state.hidden_cats.push({id:Date.now()+i,name:`Cat #${state.hidden_cats.length+1}`}); } state.total += n; state.history=[{type:"total+",delta:n,when:new Date().toISOString()}, ...state.history]; saveAndRender(); } }
+  // actions
+  $("foundBtn").addEventListener("click", async ()=>{
+    try {
+      const color = $("fColor").value, location = $("fLoc").value;
+      const data = await api({ action:"found", color, location });
+      Object.assign(state, data);
+      foundResult.textContent = `Name: ${data.assignedName}`;
+      render();
+    } catch(e){ uiStatus(false, "Found failed: "+(e?.message||e)); }
   });
 
-  // bootstrap
-  (async function(){
-    ui.showOk("Connecting to backend…");
+  $("addBtn").addEventListener("click", async ()=>{
     try {
-      const res = await api(FN_URL);
-      if(!res.ok){ ui.showErr("GET failed:\n"+res.raw); return; }
-      state = res.json; ui.showOk("Connected ✓"); ui.render(state);
-    } catch(e){
-      ui.showErr("GET error:\n"+(e?.message||e));
-    }
-  })();
+      const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim() || undefined;
+      const data = await api({ action:"addHidden", color, location, name });
+      Object.assign(state, data);
+      if (!name && data.assignedName) $("aName").placeholder = `Auto name: ${data.assignedName}`;
+      $("aName").value = "";
+      render();
+    } catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
+  });
+
+  load();
 })();
 </script>
 </body>
