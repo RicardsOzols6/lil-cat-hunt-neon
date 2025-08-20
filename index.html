@@ -27,134 +27,132 @@
     .catrow{background:#ffffffb3;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
     .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#f1f5f9}
     .emoji{font-size:22px}
-    .modal{position:fixed;left:50%;top:20%;transform:translateX(-50%);max-width:520px;width:calc(100% - 32px);z-index:20}
-    .hidden{display:none}
+    .banner{background:#fee2e2;border:2px solid #fecaca;color:#7f1d1d;padding:10px 12px;border-radius:12px;margin-bottom:12px}
   </style>
 </head>
 <body>
 <div class="wrap">
+  <div id="status"></div>
   <div id="app"></div>
 </div>
+
 <script>
 (function(){
-  const CAT_EMOJIS = ["😺","🐱","😻","😸","😼","😽","🐈","🐈‍⬛"];
+  // Call the function directly (skip /api redirect)
+  const FN_URL = "/.netlify/functions/game";
+
+  const status = document.getElementById("status");
+  const app = document.getElementById("app");
+
+  function setStatus(msg, ok=false){
+    status.innerHTML = msg
+      ? `<div class="banner" style="${ok?'background:#dcfce7;border-color:#bbf7d0;color:#065f46':''}">${msg}</div>`
+      : "";
+  }
+
   const API = {
-    async get(){ const r = await fetch("/api/game"); if(!r.ok) throw new Error("GET failed"); return r.json(); },
-    async save(state){ const r = await fetch("/api/game",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({state})}); if(!r.ok) throw new Error("POST failed"); return r.json(); }
+    async get(){
+      const r = await fetch(FN_URL, {headers:{'cache-control':'no-store'}});
+      if(!r.ok) throw new Error("GET "+r.status);
+      return r.json();
+    },
+    async save(state){
+      const r = await fetch(FN_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({state})});
+      if(!r.ok) throw new Error("POST "+r.status);
+      return r.json();
+    }
   };
 
   const el = (tag, props={}, ...kids)=>{
     const n = document.createElement(tag);
-    Object.entries(props||{}).forEach(([k,v])=>{
+    for (const [k,v] of Object.entries(props||{})) {
       if (k==="class") n.className=v;
       else if (k==="style") Object.assign(n.style,v);
       else if (k.startsWith("on") && typeof v==="function") n.addEventListener(k.substring(2).toLowerCase(), v);
       else n.setAttribute(k,v);
-    });
+    }
     kids.flat().forEach(k=> n.append(k instanceof Node? k : document.createTextNode(k)));
     return n;
   };
 
-  const app = document.getElementById("app");
   let state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
-  let showFound = false, showAdd = false;
-  let tmpName = "", tmpLoc = "", newCatName = "", note = "", quickAdd = 1;
+  let showFound=false, showAdd=false, tmpName="", tmpLoc="", newCatName="", note="", quickAdd=1;
 
-  function percent(){ return state.total>0 ? Math.round((state.found/state.total)*100) : 0; }
+  function percent(){ return state.total>0? Math.round((state.found/state.total)*100) : 0; }
   function canIncFound(){ return state.found < state.total; }
   function canDecFound(){ return state.found > 0; }
   function canDecTotal(){ return state.total > state.found; }
+  function addHist(h){ state.history = [{...h, when:new Date().toISOString()}, ...state.history].slice(0,200); }
 
   function render(){
-    app.innerHTML = "";
+    app.innerHTML="";
     app.append(
-      // Top card
       el("div",{class:"card"},
-        el("div",{class:"title"}, CAT_EMOJIS[2], 
-          el("input",{type:"text",value:state.game_name,oninput:e=>{ state.game_name = e.target.value; API.save(state).then(updateFromServer).catch(console.error); }}),
-          el("span",{class:"pill"},"Found ",state.found," / ",state.total)
-        ),
-        el("div",{class:"muted"},"Netlify + Neon (Postgres) – synced automatically."),
+        el("div",{class:"title"},"😺 ", el("input",{type:"text",value:state.game_name,oninput:e=>{ state.game_name=e.target.value; save(); }}),
+          el("span",{class:"pill"},"Found ",state.found," / ",state.total)),
+        el("div",{class:"muted"},"Netlify Functions + Neon (Postgres)."),
         el("div",{class:"progress",style:{marginTop:"8px"}}, el("div",{class:"bar",style:{width:percent()+'%'}})),
-        el("div",{class:"card",style:{borderColor:"#fde68a",marginTop:"12px"}},
-          el("div",null, ...CAT_EMOJIS.map((em,i)=> el("span",{class:"emoji",style:{opacity:i< (state.found % CAT_EMOJIS.length)?1:0.35,marginRight:"4px"}}, em)))
-        ),
         el("div",{class:"grid",style:{marginTop:"8px"}},
           el("button",{class:"btn primary",disabled:!canIncFound(),onclick:()=>{ showFound=true; render(); }},"🐾 Found one!"),
-          el("button",{class:"btn",disabled:!canDecFound(),onclick:()=>{ state.found--; addHist({type:'found-',delta:-1,note}); save(); }},"↩️ Undo"),
+          el("button",{class:"btn",disabled:!canDecFound(),onclick:()=>{ state.found--; addHist({type:'found-',delta:-1}); save(); }},"↩️ Undo"),
           el("button",{class:"btn outline",onclick:()=>{ showAdd=true; render(); }},"➕ Add cat"),
-          el("button",{class:"btn outline",disabled:!canDecTotal(),onclick:()=>{ const removed = state.hidden_cats[state.hidden_cats.length-1]; state.hidden_cats = state.hidden_cats.slice(0,-1); state.total--; addHist({type:'total-',delta:-1,note: note || 'Removed hidden cat', name: removed?removed.name:undefined}); save(); }},"➖ Remove cat")
+          el("button",{class:"btn outline",disabled:!canDecTotal(),onclick:()=>{ state.hidden_cats=state.hidden_cats.slice(0,-1); state.total--; addHist({type:'total-',delta:-1}); save(); }},"➖ Remove cat")
         ),
         el("div",{class:"row",style:{marginTop:"8px"}},
           el("input",{type:"number",min:"1",value:quickAdd,oninput:e=>quickAdd=e.target.value,style:{width:"90px"}}),
-          el("button",{class:"btn outline",onclick:()=>{ const n = parseInt(String(quickAdd),10); if(!Number.isFinite(n)||n<=0) return; const cats = Array.from({length:n},(_,i)=>({id:Date.now()+i,name:`Cat #${state.hidden_cats.length+i+1}`})); state.hidden_cats = [...state.hidden_cats, ...cats]; state.total += n; addHist({type:'total+',delta:n,note: note || `✨ ${n} new cats added ✨`}); save(); }},"✨ Add many"),
-          el("div",{class:"row-right"},
-            el("button",{class:"btn danger",onclick:()=>{ if(!confirm('Reset found to 0?')) return; addHist({type:'reset',delta:0,note:'Game reset – ready for a new hunt! 🐱'}); state.found=0; save(); }},"Reset")
-          )
-        ),
-        el("div",{style:{marginTop:"8px"}}, el("input",{type:"text",placeholder:"💭 Optional note",value:note,oninput:e=>note=e.target.value}))
-      ),
-
-      // Activity
-      el("div",{class:"card",style:{borderColor:"#ddd6fe"}},
-        el("div",{class:"title"},"📜 Activity"),
-        state.history.length===0? el("div",{class:"muted"},"No adventures yet.") :
-        el("ul",{class:"list"}, ...state.history.map((h,i)=> el("li",{class:"li"},
-          el("div",null,
-            el("div",null,
-              h.type==="found+"? "✅ Found one!" : h.type==="found-"? "↩️ Undid a find" : h.type==="total+"? "➕ Added hidden cat" : h.type==="total-"? "➖ Removed hidden cat" : "🔄 Reset",
-              h.name? " • "+h.name:"",
-              h.location? " @ "+h.location:""
-            ),
-            h.note? el("div",{class:"muted"},h.note): null
-          ),
-          el("div",{class:"muted"}, new Date(h.when).toLocaleString())
-        )))
-      ),
-
-      // Roster
-      el("div",{class:"card",style:{borderColor:"#bbf7d0"}},
-        el("div",{class:"title"},"🐾 Cat Roster"),
-        state.hidden_cats.length===0? el("div",{class:"muted"},"No hidden cats yet.") :
-        el("ul",{class:"list"}, ...state.hidden_cats.map((c,i)=> el("li",{class:"catrow"},
-          el("span",{class:"emoji"}, i<state.found? "✅":"❓"),
-          el("span",null, c.name)
-        )))
-      ),
-
-      // Found modal
-      el("div",{class: showFound? "card modal":"hidden"},
-        el("div",{class:"title"},"😺 You found a cat!"),
-        el("input",{type:"text",placeholder:"Cat name (optional)",value:tmpName,oninput:e=>tmpName=e.target.value,style:{marginBottom:"8px"}}),
-        el("input",{type:"text",placeholder:"Location (e.g., behind the plant)",value:tmpLoc,oninput:e=>tmpLoc=e.target.value}),
-        el("div",{class:"row",style:{marginTop:"8px"}},
-          el("button",{class:"btn",onclick:()=>{showFound=false; render();}},"Cancel"),
-          el("button",{class:"btn primary",onclick:()=>{ state.found++; addHist({type:'found+',delta:1,note,name: tmpName||undefined, location: tmpLoc||undefined}); tmpName=\"\"; tmpLoc=\"\"; showFound=false; save(); }},"Save & count it")
+          el("button",{class:"btn outline",onclick:()=>{ const n=parseInt(String(quickAdd),10); if(!Number.isFinite(n)||n<=0) return; const cats=Array.from({length:n},(_,i)=>({id:Date.now()+i,name:`Cat #${state.hidden_cats.length+i+1}`})); state.hidden_cats=[...state.hidden_cats,...cats]; state.total+=n; addHist({type:'total+',delta:n}); save(); }},"✨ Add many")
         )
       ),
-
-      // Add modal
-      el("div",{class: showAdd? "card modal":"hidden"},
+      el("div",{class:"card"},
+        el("div",{class:"title"},"📜 Activity"),
+        state.history.length? el("ul",{class:"list"}, ...state.history.map(h=>el("li",{class:"li"},
+          el("div",null, h.type==="found+"?"✅ Found one":h.type==="found-"?"↩️ Undid a find":h.type==="total+"?"➕ Added hidden cat":h.type==="total-"?"➖ Removed hidden cat":"🔄"),
+          el("div",{class:"muted"}, new Date(h.when).toLocaleString())
+        ))): el("div",{class:"muted"},"No adventures yet."))
+      ,
+      el("div",{class:"card"},
+        el("div",{class:"title"},"🐾 Cat roster"),
+        state.hidden_cats.length? el("ul",{class:"list"}, ...state.hidden_cats.map((c,i)=> el("li",{class:"catrow"},
+          el("span",null, i<state.found?"✅":"❓"), " ", c.name
+        ))): el("div",{class:"muted"},"No hidden cats yet."))
+      ),
+      el("div",{class: showFound? "card":"", style:{display: showFound?"block":"none"}},
+        el("div",{class:"title"},"😺 You found a cat!"),
+        el("input",{type:"text",placeholder:"Cat name (optional)",value:tmpName,oninput:e=>tmpName=e.target.value,style:{marginBottom:"8px"}}),
+        el("input",{type:"text",placeholder:"Location (optional)",value:tmpLoc,oninput:e=>tmpLoc=e.target.value}),
+        el("div",{class:"row",style:{marginTop:"8px"}},
+          el("button",{class:"btn",onclick:()=>{ showFound=false; render(); }},"Cancel"),
+          el("button",{class:"btn primary",onclick:()=>{ state.found++; addHist({type:'found+',delta:1,name:tmpName||undefined,location:tmpLoc||undefined}); tmpName=""; tmpLoc=""; showFound=false; save(); }},"Save & count it")
+        )
+      ),
+      el("div",{class: showAdd? "card":"", style:{display: showAdd?"block":"none"}},
         el("div",{class:"title"},"🐱 Add a hidden cat"),
         el("input",{type:"text",placeholder:"Cat name (optional)",value:newCatName,oninput:e=>newCatName=e.target.value}),
         el("div",{class:"row",style:{marginTop:"8px"}},
-          el("button",{class:"btn",onclick:()=>{showAdd=false; render();}},"Cancel"),
-          el("button",{class:"btn",onclick:()=>{ const id=Date.now(); const obj={id,name:newCatName||`Cat #${state.hidden_cats.length+1}`}; state.hidden_cats=[...state.hidden_cats,obj]; state.total+=1; addHist({type:'total+',delta:1,note: note||'Added hidden cat', name: obj.name}); newCatName=\"\"; showAdd=false; save(); }},"Add cat")
+          el("button",{class:"btn",onclick:()=>{ showAdd=false; render(); }},"Cancel"),
+          el("button",{class:"btn",onclick:()=>{ const id=Date.now(); const obj={id,name:newCatName||`Cat #${state.hidden_cats.length+1}`}; state.hidden_cats=[...state.hidden_cats,obj]; state.total+=1; addHist({type:'total+',delta:1,name:obj.name}); newCatName=""; showAdd=false; save(); }},"Add cat")
         )
       )
     );
   }
 
-  function addHist(h){ state.history = [{...h, when:new Date().toISOString()}, ...state.history].slice(0,200); }
-  function updateFromServer(s){ state = { ...state, ...s, game_name: s.game_name }; render(); }
-  function save(){ API.save(state).then(updateFromServer).catch(err=>{ console.error(err); alert("Save failed."); }); render(); }
+  function updateFromServer(s){ state = {...state, ...s, game_name: s.game_name || state.game_name}; render(); }
 
-  // bootstrap
-  API.get().then(updateFromServer).catch(err=>{
-    console.error(err);
-    app.append(document.createTextNode("Could not load game. Did you set the database connection in Netlify?"));
-  });
+  async function bootstrap(){
+    try {
+      setStatus("Connecting to database…");
+      const data = await API.get();
+      setStatus("Connected ✓", true);
+      updateFromServer(data);
+    } catch (e) {
+      console.error(e);
+      setStatus("Could not reach the backend function. Open <code>/.netlify/functions/game</code> to see the error. If it says “Missing DATABASE_URL”, set NETLIFY_DATABASE_URL in Site → Project configuration → Environment variables.", false);
+      render(); // still show UI so it's usable if API is down
+    }
+  }
+
   render();
+  bootstrap();
 })();
 </script>
 </body>
