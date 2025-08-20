@@ -6,23 +6,26 @@
   <title>Lil Cat Hunt 🐾</title>
   <style>
     :root{
-      --bg1:#fff1f5; --bg2:#f3e8ff; --card:#ffffff; --txt:#0f172a; --muted:#64748b; --accent:#ec4899;
+      --bg1:#ffeaf3; --bg2:#f4e8ff; --card:#ffffff; --txt:#0f172a; --muted:#64748b; --accent:#ec4899;
       --ok:#dcfce7; --okb:#bbf7d0; --oktxt:#065f46; --err:#fee2e2; --errb:#fecaca; --errtxt:#7f1d1d;
+      --chip:#fde68a;
     }
     html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--txt);}
     .wrap{max-width:980px;margin:0 auto;padding:24px;}
-    h1{margin:0 0 12px 0}
-    .card{background:var(--card);border:2px solid #fecdd3;border-radius:18px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;}
+    h1{margin:0 0 12px 0;letter-spacing:0.2px}
+    .card{background:var(--card);border:2px solid #fecdd3;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .title{font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;gap:10px;align-items:center}
     .muted{color:var(--muted);font-size:12px}
     .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;background:#f1f5f9}
     .btn.primary{background:var(--accent);color:white}
     .btn.ghost{background:white;border:2px solid #e2e8f0}
+    .btn.danger{background:#ef4444;color:white}
     select,input[type=text],input[type=number]{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;font:inherit}
     .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#f1f5f9}
+    .chip{background:var(--chip);padding:2px 8px;border-radius:999px;font-size:12px}
     .progress{height:10px;border-radius:999px;background:#ffe4e6;overflow:hidden}
-    .bar{height:100%;background:#e879f9;width:0%}
+    .bar{height:100%;background:linear-gradient(90deg,#e879f9,#fb7185);width:0%}
     .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
     .li{background:#ffffffb3;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
     .catrow{background:#ffffffb3;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
@@ -38,8 +41,8 @@
   <div id="status"></div>
 
   <div class="card">
-    <div class="title" id="headerTitle">Lil Cat Hunt <span class="pill" id="score">0 / 0</span></div>
-    <div class="muted">Shared scoreboard. Colors + locations map to names automatically.</div>
+    <div class="title"><span id="gameName">Lil Cat Hunt</span> <span class="pill" id="score">0 / 0</span></div>
+    <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
     <div class="progress" style="margin-top:8px"><div class="bar" id="bar" style="width:0%"></div></div>
   </div>
 
@@ -48,9 +51,7 @@
       <div class="title">Found a Cat</div>
       <div class="row">
         <select id="fColor">
-          <option>Black</option>
-          <option>Orange</option>
-          <option>Beige</option>
+          <option>Black</option><option>Orange</option><option>Beige</option>
         </select>
         <select id="fLoc">
           <option>Kitchen</option>
@@ -67,8 +68,8 @@
       <div class="muted" id="foundResult" style="margin-top:6px"></div>
     </div>
 
-    <div class="card">
-      <div class="title">Add Cat</div>
+    <div class="card" id="adminAdd" style="display:none">
+      <div class="title">Add Cat <span class="chip">Admin</span></div>
       <div class="row">
         <select id="aColor">
           <option>Black</option><option>Orange</option><option>Beige</option>
@@ -83,7 +84,7 @@
           <option>Storage Room 2</option>
           <option>Hallway</option>
         </select>
-        <input id="aName" type="text" placeholder="Name (optional — auto if empty)" />
+        <input id="aName" type="text" placeholder="Name (Emyl sees this)" />
         <button class="btn ghost" id="addBtn">Add</button>
       </div>
       <div class="muted">Total goes up when you add cats.</div>
@@ -91,8 +92,11 @@
   </div>
 
   <div class="card">
-    <div class="title">Activity</div>
+    <div class="title">Activity <span id="moreToggle" class="pill" style="cursor:pointer; margin-left:auto">Show more</span></div>
     <ul class="list" id="activity"></ul>
+    <div id="adminActions" class="row" style="display:none; margin-top:6px">
+      <button class="btn danger" id="clearHistory">Clear activity</button>
+    </div>
   </div>
 
   <div class="card">
@@ -106,64 +110,136 @@
   const FN = "/.netlify/functions/game";
   const $ = (id)=>document.getElementById(id);
   const status = $("status");
+  const gameNameEl = $("gameName");
   const score = $("score");
   const bar = $("bar");
   const foundResult = $("foundResult");
   const activity = $("activity");
   const cats = $("cats");
+  const adminAdd = $("adminAdd");
+  const adminActions = $("adminActions");
+  const moreToggle = $("moreToggle");
 
-  const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
+  // Admin mode via ?admin=CODE
+  const params = new URLSearchParams(location.search);
+  const adminCode = params.get("admin");
+  const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
+  const isAdmin = !!adminCode;
+
+  // --- Cute beeps/boops ---
+  const ding = (freq=880, ms=120)=>{ try{
+    const a = new (window.AudioContext||window.webkitAudioContext)();
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.type="sine"; o.frequency.value=freq; g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3, a.currentTime+0.02);
+    o.start(); o.stop(a.currentTime + ms/1000);
+  }catch{} };
 
   function uiStatus(ok, msg){
     status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`;
   }
-  function render(){
+
+  const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
+
+  function render(listExpanded=false){
+    gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
     score.textContent = `${state.found} / ${state.total}`;
     bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
-    activity.innerHTML = (state.history||[]).map(h=>`<li class="li"><div>${h.type==='found+'?'✅ Found':'➕ Added'} ${h.name?`<b>${escapeHTML(h.name)}</b>`:''} <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${new Date(h.when).toLocaleString()}</div></li>`).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
-    cats.innerHTML = (state.hidden_cats||[]).map((c,i)=>`<li class="catrow">${c.found?'✅':'❓'} <b>${escapeHTML(c.name||`Cat #${i+1}`)}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span></li>`).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
+
+    // Activity: show last 4, toggle for full
+    const logs = state.history || [];
+    let show = logs;
+    if (!listExpanded) show = logs.slice(0,4);
+    activity.innerHTML = show.map(h=>{
+      const icon = h.type==='found+'?'✅':'➕';
+      const name = h.name || '🫥 Hidden';
+      const when = new Date(h.when).toLocaleString();
+      return `<li class="li"><div>${icon} <b>${escapeHTML(name)}</b> <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${when}</div></li>`;
+    }).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
+
+    moreToggle.textContent = listExpanded ? "Show less" : "Show more";
+    moreToggle.onclick = ()=>{ render(!listExpanded); };
+
+    // Cats
+    cats.innerHTML = (state.hidden_cats||[]).map(c=>{
+      const left = `${c.found?'✅':'❓'} <b>${escapeHTML(c.name||'🫥 Hidden')}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span>`;
+      const del = isAdmin ? `<button class="btn danger" data-del="${c.id}">Delete</button>` : "";
+      return `<li class="catrow">${left} <span style="margin-left:auto"></span>${del}</li>`;
+    }).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
+
+    // admin bits
+    adminAdd.style.display = isAdmin ? "block" : "none";
+    adminActions.style.display = isAdmin ? "flex" : "none";
+
+    // wire delete buttons
+    if (isAdmin){
+      cats.querySelectorAll("[data-del]").forEach(btn=>{
+        btn.onclick = async ()=>{
+          try{
+            await post({ action:"deleteCat", id: Number(btn.dataset.del) });
+            ding(340,120);
+          }catch(e){ uiStatus(false, e.message||e); }
+        }
+      });
+    }
   }
+
   function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
 
-  async function api(body){
-    const r = await fetch(FN,{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
-    const txt = await r.text();
-    let json; try{ json = JSON.parse(txt) }catch{ json=null }
-    if(!r.ok) throw new Error(json?.error || txt || r.status);
-    return json;
+  async function get(){
+    const r = await fetch(FN + adminQS);
+    if(!r.ok){ throw new Error(await r.text()); }
+    return r.json();
   }
-  async function load(){
-    uiStatus(true,"Connecting to database…");
-    const r = await fetch(FN);
-    const data = await r.json();
-    Object.assign(state, data);
-    uiStatus(true,"Connected ✓");
+  async function post(body){
+    const url = FN + adminQS;
+    const r = await fetch(url,{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    const txt = await r.text();
+    let json; try{ json = JSON.parse(txt) }catch{ json = null }
+    if(!r.ok){ throw new Error(json?.error || txt || r.status); }
+    Object.assign(state, json);
     render();
+    return json;
   }
 
   // actions
   $("foundBtn").addEventListener("click", async ()=>{
-    try {
+    try{
       const color = $("fColor").value, location = $("fLoc").value;
-      const data = await api({ action:"found", color, location });
-      Object.assign(state, data);
-      foundResult.textContent = `Name: ${data.assignedName}`;
-      render();
-    } catch(e){ uiStatus(false, "Found failed: "+(e?.message||e)); }
+      await post({ action:"found", color, location });
+      foundResult.textContent = "Nice! One revealed 🎉";
+      ding(880,120); setTimeout(()=>ding(1320,120),120);
+    }catch(e){ uiStatus(false, "Found failed: "+(e?.message||e)); }
   });
 
   $("addBtn").addEventListener("click", async ()=>{
-    try {
-      const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim() || undefined;
-      const data = await api({ action:"addHidden", color, location, name });
-      Object.assign(state, data);
-      if (!name && data.assignedName) $("aName").placeholder = `Auto name: ${data.assignedName}`;
+    try{
+      const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
+      await post({ action:"addHidden", color, location, name });
       $("aName").value = "";
-      render();
-    } catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
+      ding(700,120);
+    }catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
   });
 
-  load();
+  $("clearHistory").addEventListener("click", async ()=>{
+    if(!confirm("Clear the whole activity log?")) return;
+    try{
+      await post({ action:"clearHistory" });
+      ding(300,120);
+    }catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
+  });
+
+  // boot
+  (async ()=>{
+    try{
+      uiStatus(true,"Connecting to database…");
+      const data = await get();
+      Object.assign(state, data);
+      uiStatus(true,"Connected ✓");
+      render();
+    }catch(e){ uiStatus(false, "GET error: "+(e?.message||e)); }
+  })();
 })();
 </script>
 </body>
