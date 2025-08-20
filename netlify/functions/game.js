@@ -16,35 +16,36 @@ const cors = {
 const ok = (body) => ({ statusCode: 200, headers: cors, body: JSON.stringify(body) });
 const err = (code, msg) => ({ statusCode: code, headers: cors, body: JSON.stringify({ error: msg }) });
 
+function eq(a,b){ return String(a||"").toLowerCase() === String(b||"").toLowerCase(); }
+
 export async function handler(event) {
   if (event.httpMethod === "OPTIONS") return ok({ ok: true });
   if (!CONN) return err(500, "Missing DATABASE_URL / NETLIFY_DATABASE_URL");
 
   try {
     const sql = neon(CONN);
-    // Tables
-    await sql`
-      create table if not exists cat_game (
-        id text primary key,
-        found int not null default 0,
-        total int not null default 0,
-        game_name text not null default '🐾 Lil Cat Hunt 🐾',
-        hidden_cats jsonb not null default '[]'::jsonb,
-        history jsonb not null default '[]'::jsonb,
-        updated_at timestamptz not null default now()
-      );
-      create table if not exists cat_rules (
-        color text not null,
-        location text not null,
-        name text not null,
-        priority int not null default 0,
-        primary key (color, location)
-      );
-    `;
+
+    // IMPORTANT: one statement per call
+    await sql`create table if not exists cat_game (
+      id text primary key,
+      found int not null default 0,
+      total int not null default 0,
+      game_name text not null default '🐾 Lil Cat Hunt 🐾',
+      hidden_cats jsonb not null default '[]'::jsonb,
+      history jsonb not null default '[]'::jsonb,
+      updated_at timestamptz not null default now()
+    )`;
+
+    await sql`create table if not exists cat_rules (
+      color text not null,
+      location text not null,
+      name text not null,
+      priority int not null default 0,
+      primary key (color, location)
+    )`;
 
     const id = "default";
 
-    // Helpers
     const getState = async () => {
       const rows = await sql`select * from cat_game where id = ${id}`;
       if (rows.length) return rows[0];
@@ -89,7 +90,6 @@ export async function handler(event) {
       return rows.length ? rows[0].name : null;
     };
 
-    // ROUTES
     if (event.httpMethod === "GET") {
       const s = await getState();
       return ok({
@@ -104,10 +104,8 @@ export async function handler(event) {
       try { body = JSON.parse(event.body || "{}"); } catch { return err(400, "Invalid JSON"); }
       const action = body.action;
 
-      // Optional: seed a few defaults
       if (action === "seedRules") {
         const defaults = [
-          // color + location -> name (edit freely!)
           ["Black","Kitchen","Shadow"],
           ["Orange","Kitchen","Marmalade"],
           ["Beige","Kitchen","Latte"],
@@ -134,13 +132,15 @@ export async function handler(event) {
           ["Beige","Hallway","Waffle"],
         ];
         for (const [c,l,n] of defaults) {
-          await sql`insert into cat_rules (color, location, name) values (${c}, ${l}, ${n})
-                    on conflict (color,location) do update set name=excluded.name`;
+          await sql`
+            insert into cat_rules (color, location, name)
+            values (${c}, ${l}, ${n})
+            on conflict (color,location) do update set name=excluded.name
+          `;
         }
         return ok({ seeded: defaults.length });
       }
 
-      // Add hidden: color/location/name? (name optional → use rules)
       if (action === "addHidden") {
         const { color, location } = body;
         let name = body.name;
@@ -154,21 +154,19 @@ export async function handler(event) {
         return ok({ ...ns, assignedName: name });
       }
 
-      // Found: color/location → resolve name via rules; mark found
       if (action === "found") {
         const { color, location } = body;
         const s = await getState();
-        // Try match an existing hidden cat with same color+location not yet found
-        let foundIndex = s.hidden_cats.findIndex(c => !c.found && eq(c.color,color) && eq(c.location,location));
+
+        let idx = s.hidden_cats.findIndex(c => !c.found && eq(c.color,color) && eq(c.location,location));
         const assign = async () => (await suggestName(color, location)) || `Cat #${s.found+1}`;
-        const name = foundIndex >= 0
-          ? (s.hidden_cats[foundIndex].name || await assign())
+        const name = idx >= 0
+          ? (s.hidden_cats[idx].name || await assign())
           : await assign();
 
-        if (foundIndex >= 0) {
-          s.hidden_cats[foundIndex] = { ...s.hidden_cats[foundIndex], name, found:true, found_at:new Date().toISOString() };
+        if (idx >= 0) {
+          s.hidden_cats[idx] = { ...s.hidden_cats[idx], name, found:true, found_at:new Date().toISOString() };
         } else {
-          // not pre-added → add as ad-hoc found cat but do not change total
           s.hidden_cats = [{ id: Date.now(), name, color, location, found:true, found_at:new Date().toISOString() }, ...s.hidden_cats];
         }
         s.found += 1;
@@ -186,5 +184,3 @@ export async function handler(event) {
     return err(500, String(e?.message || e));
   }
 }
-
-function eq(a,b){ return String(a||"").toLowerCase() === String(b||"").toLowerCase(); }
