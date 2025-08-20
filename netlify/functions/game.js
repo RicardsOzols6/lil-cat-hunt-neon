@@ -6,6 +6,8 @@ const CONN =
   process.env.NEON_DATABASE_URL ||
   process.env.NETLIFY_DATABASE_URL;
 
+const ADMIN_CODE = process.env.ADMIN_CODE || "";
+
 const cors = {
   "content-type": "application/json",
   "access-control-allow-origin": "*",
@@ -16,16 +18,21 @@ const cors = {
 const ok = (body) => ({ statusCode: 200, headers: cors, body: JSON.stringify(body) });
 const err = (code, msg) => ({ statusCode: code, headers: cors, body: JSON.stringify({ error: msg }) });
 
-function eq(a,b){ return String(a||"").toLowerCase() === String(b||"").toLowerCase(); }
+const nowISO = () => new Date().toISOString();
+const eq = (a,b)=> String(a||"").toLowerCase() === String(b||"").toLowerCase();
 
 export async function handler(event) {
   if (event.httpMethod === "OPTIONS") return ok({ ok: true });
   if (!CONN) return err(500, "Missing DATABASE_URL / NETLIFY_DATABASE_URL");
 
   try {
+    const isAdmin =
+      (event.queryStringParameters && event.queryStringParameters.admin === ADMIN_CODE) ||
+      false;
+
     const sql = neon(CONN);
 
-    // IMPORTANT: one statement per call
+    // ONE statement per call (Neon prepared-stmt rule)
     await sql`create table if not exists cat_game (
       id text primary key,
       found int not null default 0,
@@ -36,14 +43,6 @@ export async function handler(event) {
       updated_at timestamptz not null default now()
     )`;
 
-    await sql`create table if not exists cat_rules (
-      color text not null,
-      location text not null,
-      name text not null,
-      priority int not null default 0,
-      primary key (color, location)
-    )`;
-
     const id = "default";
 
     const getState = async () => {
@@ -51,13 +50,13 @@ export async function handler(event) {
       if (rows.length) return rows[0];
       const seed = {
         id, found: 0, total: 0, game_name: "🐾 Lil Cat Hunt 🐾",
-        hidden_cats: [], history: []
+        hidden_cats: [], history: [], updated_at: nowISO()
       };
       await sql`
-        insert into cat_game (id, found, total, game_name, hidden_cats, history)
+        insert into cat_game (id, found, total, game_name, hidden_cats, history, updated_at)
         values (${id}, ${seed.found}, ${seed.total}, ${seed.game_name},
                 ${JSON.stringify(seed.hidden_cats)}::jsonb,
-                ${JSON.stringify(seed.history)}::jsonb)
+                ${JSON.stringify(seed.history)}::jsonb, ${seed.updated_at})
         on conflict (id) do nothing
       `;
       return seed;
@@ -81,22 +80,39 @@ export async function handler(event) {
       return rows[0];
     };
 
-    const suggestName = async (color, location) => {
-      const rows = await sql`
-        select name from cat_rules
-        where lower(color)=lower(${color}) and lower(location)=lower(${location})
-        order by priority desc limit 1
-      `;
-      return rows.length ? rows[0].name : null;
+    // Mask names of unfound cats (and their history) for non-admins
+    const maskForPlayer = (state) => {
+      const HIDDEN = "🫥 Hidden";
+      const s = structuredClone(state);
+      if (!s) return s;
+
+      if (!isAdmin) {
+        s.hidden_cats = (s.hidden_cats || []).map(c =>
+          c.found ? c : { ...c, name: HIDDEN }
+        );
+        s.history = (s.history || []).map(h => {
+          if (h.type === "found+") return h; // reveal name when found
+          // hide add events name
+          return { ...h, name: HIDDEN };
+        });
+      }
+      return s;
+    };
+
+    // Pick most probable cat
+    const pickCandidateIndex = (cats, color, location) => {
+      let i = cats.findIndex(c => !c.found && eq(c.color,color) && eq(c.location,location));
+      if (i >= 0) return i;
+      i = cats.findIndex(c => !c.found && eq(c.color,color));
+      if (i >= 0) return i;
+      i = cats.findIndex(c => !c.found && eq(c.location,location));
+      if (i >= 0) return i;
+      return cats.findIndex(c => !c.found);
     };
 
     if (event.httpMethod === "GET") {
-      const s = await getState();
-      return ok({
-        id: s.id, found: s.found, total: s.total,
-        game_name: s.game_name, hidden_cats: s.hidden_cats, history: s.history,
-        updated_at: s.updated_at
-      });
+      const raw = await getState();
+      return ok(maskForPlayer(raw));
     }
 
     if (event.httpMethod === "POST") {
@@ -104,75 +120,73 @@ export async function handler(event) {
       try { body = JSON.parse(event.body || "{}"); } catch { return err(400, "Invalid JSON"); }
       const action = body.action;
 
-      if (action === "seedRules") {
-        const defaults = [
-          ["Black","Kitchen","Shadow"],
-          ["Orange","Kitchen","Marmalade"],
-          ["Beige","Kitchen","Latte"],
-          ["Black","Emyl’s Bathroom","Ink"],
-          ["Orange","Emyl’s Bathroom","Goldie"],
-          ["Beige","Emyl’s Bathroom","Sandie"],
-          ["Black","Richards Bathroom","Soot"],
-          ["Orange","Richards Bathroom","Tiger"],
-          ["Beige","Richards Bathroom","Biscuit"],
-          ["Black","Emyl’s Room","Midnight"],
-          ["Orange","Emyl’s Room","Sunny"],
-          ["Beige","Emyl’s Room","Tofu"],
-          ["Black","Richards Room","Licorice"],
-          ["Orange","Richards Room","Flame"],
-          ["Beige","Richards Room","Cashew"],
-          ["Black","Storage Room 1","Charcoal"],
-          ["Orange","Storage Room 1","Apricot"],
-          ["Beige","Storage Room 1","Almond"],
-          ["Black","Storage Room 2","Onyx"],
-          ["Orange","Storage Room 2","Paprika"],
-          ["Beige","Storage Room 2","Oat"],
-          ["Black","Hallway","Ninja"],
-          ["Orange","Hallway","Fanta"],
-          ["Beige","Hallway","Waffle"],
-        ];
-        for (const [c,l,n] of defaults) {
-          await sql`
-            insert into cat_rules (color, location, name)
-            values (${c}, ${l}, ${n})
-            on conflict (color,location) do update set name=excluded.name
-          `;
-        }
-        return ok({ seeded: defaults.length });
+      const s = await getState();
+
+      // Admin-only actions
+      if (["addHidden","deleteCat","clearHistory","renameGame"].includes(action) && !isAdmin) {
+        return err(403, "Admin required");
+      }
+
+      if (action === "renameGame") {
+        s.game_name = String(body.name || s.game_name).slice(0, 60);
+        const ns = await saveState(s);
+        return ok(maskForPlayer(ns));
       }
 
       if (action === "addHidden") {
         const { color, location } = body;
-        let name = body.name;
-        if (!name) name = (await suggestName(color, location)) || `Cat #${Date.now()%10000}`;
-        const s = await getState();
-        const cat = { id: Date.now(), name, color, location, found: false };
-        s.hidden_cats = [...s.hidden_cats, cat];
+        let name = body.name?.trim();
+        if (!color || !location) return err(400, "color & location required");
+        if (!name) name = `🫥 Hidden`; // store a placeholder; masked anyway for players
+        const cat = { id: Date.now(), name, color, location, found: false, created_at: nowISO() };
+        s.hidden_cats = [...(s.hidden_cats||[]), cat];
         s.total += 1;
-        s.history = [{ type:"total+", delta:1, where:location, color, name, when:new Date().toISOString() }, ...s.history].slice(0,200);
+        s.history = [
+          { type:"total+", delta:1, where:location, color, name: cat.name, when: nowISO() },
+          ...(s.history||[])
+        ].slice(0, 200);
         const ns = await saveState(s);
-        return ok({ ...ns, assignedName: name });
+        return ok(maskForPlayer(ns));
+      }
+
+      if (action === "deleteCat") {
+        const { id: cid } = body;
+        const cats = s.hidden_cats || [];
+        const idx = cats.findIndex(c => c.id === cid);
+        if (idx === -1) return err(404, "Cat not found");
+        const wasFound = !!cats[idx].found;
+        s.hidden_cats = cats.filter(c => c.id !== cid);
+        s.total = Math.max(0, s.total - 1);
+        if (wasFound) s.found = Math.max(0, s.found - 1);
+        s.history = [{ type:"delete", id: cid, when: nowISO() }, ...(s.history||[])].slice(0,200);
+        const ns = await saveState(s);
+        return ok(maskForPlayer(ns));
+      }
+
+      if (action === "clearHistory") {
+        s.history = [];
+        const ns = await saveState(s);
+        return ok(maskForPlayer(ns));
       }
 
       if (action === "found") {
         const { color, location } = body;
-        const s = await getState();
+        const cats = s.hidden_cats || [];
+        const idx = pickCandidateIndex(cats, color, location);
 
-        let idx = s.hidden_cats.findIndex(c => !c.found && eq(c.color,color) && eq(c.location,location));
-        const assign = async () => (await suggestName(color, location)) || `Cat #${s.found+1}`;
-        const name = idx >= 0
-          ? (s.hidden_cats[idx].name || await assign())
-          : await assign();
-
-        if (idx >= 0) {
-          s.hidden_cats[idx] = { ...s.hidden_cats[idx], name, found:true, found_at:new Date().toISOString() };
+        if (idx === -1) {
+          // nothing to reveal; add an ad-hoc found note
+          s.history = [{ type:"found+", delta:1, where:location, color, name:"(ad-hoc)", when: nowISO() }, ...(s.history||[])].slice(0,200);
+          s.found += 1;
         } else {
-          s.hidden_cats = [{ id: Date.now(), name, color, location, found:true, found_at:new Date().toISOString() }, ...s.hidden_cats];
+          const chosen = cats[idx];
+          s.hidden_cats[idx] = { ...chosen, found: true, found_at: nowISO() };
+          s.found += 1;
+          s.history = [{ type:"found+", delta:1, where: chosen.location, color: chosen.color, name: chosen.name, when: nowISO() }, ...(s.history||[])].slice(0,200);
         }
-        s.found += 1;
-        s.history = [{ type:"found+", name, where:location, color, delta:1, when:new Date().toISOString() }, ...s.history].slice(0,200);
+
         const ns = await saveState(s);
-        return ok({ ...ns, assignedName: name });
+        return ok(maskForPlayer(ns));
       }
 
       return err(400, "Unknown action");
