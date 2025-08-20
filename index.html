@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lil Cat Hunt 🐾</title>
+  <style>
+    :root{--bg1:#fff1f5;--bg2:#f3e8ff;--card:#ffffff;--txt:#0f172a;--muted:#64748b;--accent:#ec4899;}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--txt);}
+    .wrap{max-width:960px;margin:0 auto;padding:24px;}
+    .card{background:var(--card);border:2px solid #fecdd3;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .row-right{margin-left:auto;display:flex;gap:8px}
+    .title{font-size:20px;font-weight:700;margin:0 0 6px 0;display:flex;gap:8px;align-items:center}
+    .muted{color:var(--muted);font-size:12px}
+    .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;background:#f1f5f9}
+    .btn.primary{background:var(--accent);color:white}
+    .btn.danger{background:#ef4444;color:white}
+    .btn.outline{background:white;border:2px solid #e2e8f0}
+    input[type=text],input[type=number]{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;width:100%;font:inherit}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    @media (max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .progress{height:10px;border-radius:999px;background:#ffe4e6;overflow:hidden}
+    .bar{height:100%;background:#e879f9;width:0%}
+    .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+    .li{background:#ffffffb3;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .catrow{background:#ffffffb3;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
+    .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#f1f5f9}
+    .emoji{font-size:22px}
+    .modal{position:fixed;left:50%;top:20%;transform:translateX(-50%);max-width:520px;width:calc(100% - 32px);z-index:20}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div id="app"></div>
+</div>
+<script>
+(function(){
+  const CAT_EMOJIS = ["😺","🐱","😻","😸","😼","😽","🐈","🐈‍⬛"];
+  const API = {
+    async get(){ const r = await fetch("/api/game"); if(!r.ok) throw new Error("GET failed"); return r.json(); },
+    async save(state){ const r = await fetch("/api/game",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({state})}); if(!r.ok) throw new Error("POST failed"); return r.json(); }
+  };
+
+  const el = (tag, props={}, ...kids)=>{
+    const n = document.createElement(tag);
+    Object.entries(props||{}).forEach(([k,v])=>{
+      if (k==="class") n.className=v;
+      else if (k==="style") Object.assign(n.style,v);
+      else if (k.startsWith("on") && typeof v==="function") n.addEventListener(k.substring(2).toLowerCase(), v);
+      else n.setAttribute(k,v);
+    });
+    kids.flat().forEach(k=> n.append(k instanceof Node? k : document.createTextNode(k)));
+    return n;
+  };
+
+  const app = document.getElementById("app");
+  let state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
+  let showFound = false, showAdd = false;
+  let tmpName = "", tmpLoc = "", newCatName = "", note = "", quickAdd = 1;
+
+  function percent(){ return state.total>0 ? Math.round((state.found/state.total)*100) : 0; }
+  function canIncFound(){ return state.found < state.total; }
+  function canDecFound(){ return state.found > 0; }
+  function canDecTotal(){ return state.total > state.found; }
+
+  function render(){
+    app.innerHTML = "";
+    app.append(
+      // Top card
+      el("div",{class:"card"},
+        el("div",{class:"title"}, CAT_EMOJIS[2], 
+          el("input",{type:"text",value:state.game_name,oninput:e=>{ state.game_name = e.target.value; API.save(state).then(updateFromServer).catch(console.error); }}),
+          el("span",{class:"pill"},"Found ",state.found," / ",state.total)
+        ),
+        el("div",{class:"muted"},"Netlify + Neon (Postgres) – synced automatically."),
+        el("div",{class:"progress",style:{marginTop:"8px"}}, el("div",{class:"bar",style:{width:percent()+'%'}})),
+        el("div",{class:"card",style:{borderColor:"#fde68a",marginTop:"12px"}},
+          el("div",null, ...CAT_EMOJIS.map((em,i)=> el("span",{class:"emoji",style:{opacity:i< (state.found % CAT_EMOJIS.length)?1:0.35,marginRight:"4px"}}, em)))
+        ),
+        el("div",{class:"grid",style:{marginTop:"8px"}},
+          el("button",{class:"btn primary",disabled:!canIncFound(),onclick:()=>{ showFound=true; render(); }},"🐾 Found one!"),
+          el("button",{class:"btn",disabled:!canDecFound(),onclick:()=>{ state.found--; addHist({type:'found-',delta:-1,note}); save(); }},"↩️ Undo"),
+          el("button",{class:"btn outline",onclick:()=>{ showAdd=true; render(); }},"➕ Add cat"),
+          el("button",{class:"btn outline",disabled:!canDecTotal(),onclick:()=>{ const removed = state.hidden_cats[state.hidden_cats.length-1]; state.hidden_cats = state.hidden_cats.slice(0,-1); state.total--; addHist({type:'total-',delta:-1,note: note || 'Removed hidden cat', name: removed?removed.name:undefined}); save(); }},"➖ Remove cat")
+        ),
+        el("div",{class:"row",style:{marginTop:"8px"}},
+          el("input",{type:"number",min:"1",value:quickAdd,oninput:e=>quickAdd=e.target.value,style:{width:"90px"}}),
+          el("button",{class:"btn outline",onclick:()=>{ const n = parseInt(String(quickAdd),10); if(!Number.isFinite(n)||n<=0) return; const cats = Array.from({length:n},(_,i)=>({id:Date.now()+i,name:`Cat #${state.hidden_cats.length+i+1}`})); state.hidden_cats = [...state.hidden_cats, ...cats]; state.total += n; addHist({type:'total+',delta:n,note: note || `✨ ${n} new cats added ✨`}); save(); }},"✨ Add many"),
+          el("div",{class:"row-right"},
+            el("button",{class:"btn danger",onclick:()=>{ if(!confirm('Reset found to 0?')) return; addHist({type:'reset',delta:0,note:'Game reset – ready for a new hunt! 🐱'}); state.found=0; save(); }},"Reset")
+          )
+        ),
+        el("div",{style:{marginTop:"8px"}}, el("input",{type:"text",placeholder:"💭 Optional note",value:note,oninput:e=>note=e.target.value}))
+      ),
+
+      // Activity
+      el("div",{class:"card",style:{borderColor:"#ddd6fe"}},
+        el("div",{class:"title"},"📜 Activity"),
+        state.history.length===0? el("div",{class:"muted"},"No adventures yet.") :
+        el("ul",{class:"list"}, ...state.history.map((h,i)=> el("li",{class:"li"},
+          el("div",null,
+            el("div",null,
+              h.type==="found+"? "✅ Found one!" : h.type==="found-"? "↩️ Undid a find" : h.type==="total+"? "➕ Added hidden cat" : h.type==="total-"? "➖ Removed hidden cat" : "🔄 Reset",
+              h.name? " • "+h.name:"",
+              h.location? " @ "+h.location:""
+            ),
+            h.note? el("div",{class:"muted"},h.note): null
+          ),
+          el("div",{class:"muted"}, new Date(h.when).toLocaleString())
+        )))
+      ),
+
+      // Roster
+      el("div",{class:"card",style:{borderColor:"#bbf7d0"}},
+        el("div",{class:"title"},"🐾 Cat Roster"),
+        state.hidden_cats.length===0? el("div",{class:"muted"},"No hidden cats yet.") :
+        el("ul",{class:"list"}, ...state.hidden_cats.map((c,i)=> el("li",{class:"catrow"},
+          el("span",{class:"emoji"}, i<state.found? "✅":"❓"),
+          el("span",null, c.name)
+        )))
+      ),
+
+      // Found modal
+      el("div",{class: showFound? "card modal":"hidden"},
+        el("div",{class:"title"},"😺 You found a cat!"),
+        el("input",{type:"text",placeholder:"Cat name (optional)",value:tmpName,oninput:e=>tmpName=e.target.value,style:{marginBottom:"8px"}}),
+        el("input",{type:"text",placeholder:"Location (e.g., behind the plant)",value:tmpLoc,oninput:e=>tmpLoc=e.target.value}),
+        el("div",{class:"row",style:{marginTop:"8px"}},
+          el("button",{class:"btn",onclick:()=>{showFound=false; render();}},"Cancel"),
+          el("button",{class:"btn primary",onclick:()=>{ state.found++; addHist({type:'found+',delta:1,note,name: tmpName||undefined, location: tmpLoc||undefined}); tmpName=\"\"; tmpLoc=\"\"; showFound=false; save(); }},"Save & count it")
+        )
+      ),
+
+      // Add modal
+      el("div",{class: showAdd? "card modal":"hidden"},
+        el("div",{class:"title"},"🐱 Add a hidden cat"),
+        el("input",{type:"text",placeholder:"Cat name (optional)",value:newCatName,oninput:e=>newCatName=e.target.value}),
+        el("div",{class:"row",style:{marginTop:"8px"}},
+          el("button",{class:"btn",onclick:()=>{showAdd=false; render();}},"Cancel"),
+          el("button",{class:"btn",onclick:()=>{ const id=Date.now(); const obj={id,name:newCatName||`Cat #${state.hidden_cats.length+1}`}; state.hidden_cats=[...state.hidden_cats,obj]; state.total+=1; addHist({type:'total+',delta:1,note: note||'Added hidden cat', name: obj.name}); newCatName=\"\"; showAdd=false; save(); }},"Add cat")
+        )
+      )
+    );
+  }
+
+  function addHist(h){ state.history = [{...h, when:new Date().toISOString()}, ...state.history].slice(0,200); }
+  function updateFromServer(s){ state = { ...state, ...s, game_name: s.game_name }; render(); }
+  function save(){ API.save(state).then(updateFromServer).catch(err=>{ console.error(err); alert("Save failed."); }); render(); }
+
+  // bootstrap
+  API.get().then(updateFromServer).catch(err=>{
+    console.error(err);
+    app.append(document.createTextNode("Could not load game. Did you set the database connection in Netlify?"));
+  });
+  render();
+})();
+</script>
+</body>
+</html>
