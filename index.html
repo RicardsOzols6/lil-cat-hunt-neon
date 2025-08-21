@@ -5,33 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lil Cat Hunt 🐾</title>
 
-  <!-- Fun, round, readable font -->
+  <!-- Friendly, round headings + readable body -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --txt:#0f172a; --muted:#64748b; --accent:#ff4da6;
-      --ok:#dcfce7; --okb:#bbf7d0; --oktxt:#065f46;
-      --err:#fee2e2; --errb:#fecaca; --errtxt:#7f1d1d;
-      --card-bg: rgba(255,255,255,.68);
-      --card-brd: rgba(255,255,255,.35);
-      --ring: rgba(255,77,166,.25);
+      /* Neon dark palette */
+      --bg1:#0a0514; --bg2:#140826; --bg3:#1a0f2e;         /* deep plum */
+      --neon1:#ff3fa5; --neon2:#bf5af2; --neon3:#7a5cff;   /* pinks/purples */
+      --text:#f8f7fb; --muted:#b7a9cc;
+      --accent:#ff3fa5;
+
+      --ok:#0e2a19; --okb:#22c55e; --oktxt:#d1fae5;
+      --err:#2a0e18; --errb:#fb7185; --errtxt:#ffe4e6;
+
+      --card-bg: rgba(20, 10, 32, .55);    /* glass */
+      --card-brd: rgba(255, 255, 255, .10);
+      --ring: rgba(255,63,165,.25);
     }
 
     html,body{height:100%;margin:0}
     body{
+      color:var(--text);
       font-family: "Baloo 2","Nunito",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      color:var(--txt);
-      /* Animated multi-layer gradient */
+
+      /* Animated, moody gradient */
       background:
-        radial-gradient(60vmax 60vmax at 10% 20%, #ffd1e6 0%, transparent 55%),
-        radial-gradient(60vmax 60vmax at 90% 15%, #e6d6ff 0%, transparent 55%),
-        radial-gradient(60vmax 60vmax at 50% 90%, #c7f0ff 0%, transparent 55%),
-        conic-gradient(from 0deg at 50% 50%, #ffe3f0, #f7e8ff, #e8fff9, #ffe3f0);
-      background-size: 120% 120%, 120% 120%, 120% 120%, 300% 300%;
-      animation: swirl1 28s linear infinite, swirl2 36s linear infinite reverse, swirl3 42s linear infinite, hue 20s linear infinite;
+        radial-gradient(60vmax 60vmax at 10% 20%, rgba(255,63,165,.25) 0%, transparent 60%),
+        radial-gradient(60vmax 60vmax at 80% 15%, rgba(191,90,242,.25) 0%, transparent 60%),
+        radial-gradient(60vmax 60vmax at 50% 100%, rgba(122,92,255,.25) 0%, transparent 60%),
+        conic-gradient(from 0deg at 50% 50%, var(--bg1), var(--bg2), var(--bg3), var(--bg1));
+      background-size: 140% 140%, 140% 140%, 140% 140%, 300% 300%;
+      animation: swirl1 30s linear infinite, swirl2 36s linear infinite reverse, swirl3 48s linear infinite, hue 40s linear infinite;
       overflow-x:hidden;
     }
     @keyframes swirl1 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 50%, 50% 100%, 0% 100%, 100% 100%} }
@@ -41,10 +48,10 @@
 
     /* Floating emoji field behind content */
     .emoji-field{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0}
-    .drift{ position:absolute; font-size:22px; opacity:.9; animation: drift var(--dur) linear infinite; filter: drop-shadow(0 3px 6px rgba(0,0,0,.15)); }
+    .drift{ position:absolute; font-size:22px; opacity:.9; animation: drift var(--dur) linear infinite; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
     @keyframes drift { 
       0%{ transform: translate(var(--x,0), 110vh) rotate(0deg) scale(.9); opacity:.0}
-      6%{ opacity:1 }
+      6%{ opacity:.85 }
       100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10vh) rotate(360deg) scale(1.2); opacity:0 }
     }
 
@@ -52,12 +59,11 @@
 
     h1{
       margin:0 0 14px 0;
-      font-size: clamp(28px, 5vw, 44px);
-      line-height:1.05;
-      letter-spacing:.3px;
-      background: linear-gradient(90deg,#ff4da6,#ff9b6a,#8b5cf6,#22c1c3);
+      font-size: clamp(28px, 5vw, 46px);
+      line-height:1.05; letter-spacing:.3px;
+      background: linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3),var(--neon1));
       -webkit-background-clip:text; background-clip:text; color:transparent;
-      filter: drop-shadow(0 1px 0 rgba(255,255,255,.6));
+      text-shadow: 0 6px 24px rgba(191,90,242,.35);
     }
 
     .card{
@@ -65,11 +71,10 @@
       border: 1px solid var(--card-brd);
       border-radius: 18px;
       box-shadow:
-        0 8px 24px rgba(255,77,166,.12),
-        inset 0 0 0 1px rgba(255,255,255,.35);
-      padding:16px;
-      margin-bottom:16px;
-      backdrop-filter: blur(10px) saturate(140%);
+        0 8px 28px rgba(191,90,242,.25),
+        inset 0 0 0 1px rgba(255,255,255,.06);
+      padding:16px; margin-bottom:16px;
+      backdrop-filter: blur(12px) saturate(140%);
     }
 
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -78,30 +83,34 @@
 
     .btn{
       appearance:none;border:0;border-radius:14px;padding:10px 14px;
-      font-weight:800;cursor:pointer;background:#f1f5f9; transition:transform .06s ease, box-shadow .15s ease;
+      font-weight:800;cursor:pointer;background:rgba(255,255,255,.06);
+      color:var(--text);
+      transition:transform .06s ease, box-shadow .15s ease, background .15s ease;
+      border:1px solid rgba(255,255,255,.08)
     }
-    .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px var(--ring) }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 20px var(--ring); background:rgba(255,255,255,.10) }
     .btn:active{ transform:translateY(0) }
-    .btn.primary{ background:linear-gradient(180deg,#ff7dbd,#ff4da6); color:white }
-    .btn.ghost{ background:rgba(255,255,255,.8); border:1px solid #e2e8f0 }
-    .btn.danger{ background:#ef4444;color:white }
+    .btn.primary{ background:linear-gradient(180deg,var(--neon1),#ff1e90); color:white; border-color:transparent }
+    .btn.ghost{ background:rgba(255,255,255,.08) }
+    .btn.danger{ background:linear-gradient(180deg,#ff4d6d,#ef4444); color:white; border-color:transparent }
 
     select,input[type=text]{
-      border:1px solid rgba(0,0,0,.08);
-      background:rgba(255,255,255,.9);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
       border-radius:14px; padding:10px 12px; outline:none; font:inherit;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
     }
 
-    .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.75); border:1px solid rgba(0,0,0,.06)}
-    .chip{background:#fde68a;padding:2px 8px;border-radius:999px;font-size:12px}
+    .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12)}
+    .chip{background:rgba(253, 230, 138, .25); padding:2px 8px; border:1px solid rgba(253, 230, 138, .45); border-radius:999px; font-size:12px; color:#fde68a}
 
-    .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;border:1px solid rgba(0,0,0,.05)}
-    .bar{height:100%;background:linear-gradient(90deg,#ffa6d4,#ff7dbd,#ff9b6a);width:0%; box-shadow: inset 0 0 12px rgba(255,255,255,.7)}
+    .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+    .bar{height:100%;background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));width:0%; box-shadow: inset 0 0 14px rgba(255,255,255,.25)}
 
     .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-    .li{background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-    .catrow{background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
+    .li{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .catrow{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
 
     .ok{background:var(--ok);border:1px solid var(--okb);color:var(--oktxt);padding:10px 12px;border-radius:12px;margin-bottom:12px}
     .err{background:var(--err);border:1px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
@@ -109,8 +118,19 @@
     .section{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     @media (max-width:980px){.section{grid-template-columns:1fr}}
 
-    .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#111827;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,0.25);z-index:20;opacity:0;transition:.22s}
+    .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#0b0b14;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,0.45);z-index:20;opacity:0;transition:.22s;border:1px solid rgba(255,255,255,.10)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* Sound control bar */
+    .soundbar{
+      position:fixed; right:16px; bottom:16px; z-index:5;
+      display:flex; align-items:center; gap:8px;
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(10px) saturate(140%);
+      border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:8px 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    }
+    .soundbar input[type=range]{ width:120px }
   </style>
 </head>
 <body>
@@ -174,6 +194,13 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- Sound controls -->
+  <div class="soundbar">
+    <button id="musicToggle" class="btn ghost">▶️ Music</button>
+    <span class="muted" style="font-size:12px">Vol</span>
+    <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
+  </div>
+
   <script>
   (function(){
     const FN = "/.netlify/functions/game";
@@ -188,16 +215,104 @@
     const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
     const isAdmin = !!adminCode;
 
-    // Small tones
-    const ding = (f=880, ms=120)=>{ try{
-      const a = new (window.AudioContext||window.webkitAudioContext)();
-      const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination);
-      o.type="sine"; o.frequency.value=f; g.gain.setValueAtTime(0.0001, a.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.28, a.currentTime+0.02);
-      o.start(); o.stop(a.currentTime + ms/1000);
-    }catch{} };
+    /* ========= Fancy AUDIO ========= */
 
-    // Confetti burst (on actions)
+    let AC, master, musicGain, sfxGain, playing=false;
+    const musicBtn = $("musicToggle");
+    const vol = $("vol");
+
+    function ensureAC(){
+      if (AC) return;
+      AC = new (window.AudioContext||window.webkitAudioContext)();
+      master = AC.createGain(); master.gain.value = 0.9; master.connect(AC.destination);
+      musicGain = AC.createGain(); musicGain.gain.value = Number(vol.value); musicGain.connect(master);
+      sfxGain = AC.createGain(); sfxGain.gain.value = 0.7; sfxGain.connect(master);
+    }
+
+    // simple tone
+    function tone(freq=880, dur=0.12, type="square", gainNode=sfxGain){
+      ensureAC();
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, AC.currentTime);
+      g.gain.setValueAtTime(0.0001, AC.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.3, AC.currentTime+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
+      o.connect(g); g.connect(gainNode);
+      o.start(); o.stop(AC.currentTime+dur+0.02);
+    }
+    // noise burst (for hats)
+    function noise(dur=0.06, gain=0.15){
+      ensureAC();
+      const bufferSize = AC.sampleRate * dur;
+      const buffer = AC.createBuffer(1, bufferSize, AC.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i=0;i<bufferSize;i++) data[i] = Math.random()*2-1;
+      const src = AC.createBufferSource(); src.buffer = buffer;
+      const g = AC.createGain(); g.gain.value = gain;
+      const bp = AC.createBiquadFilter(); bp.type="highpass"; bp.frequency.value = 5000;
+      src.connect(bp); bp.connect(g); g.connect(sfxGain);
+      src.start(); src.stop(AC.currentTime+dur);
+    }
+
+    // chiptune loop (tiny sequencer)
+    let seqTimer=null, step=0;
+    function startMusic(){
+      ensureAC();
+      if (playing) return;
+      playing = true;
+      musicBtn.textContent = "⏸️ Music";
+      const tempo = 120; // BPM
+      const spb = 60/tempo; // seconds per beat
+      const patternLen = 16;
+
+      // lead notes (in semitones, C major-ish)
+      const lead = [0,4,7,12,  0,4,7,12,  2,5,9,14,  2,5,9,14]; // arps
+      const baseFreq = 440; // A4
+      const major = n => baseFreq * Math.pow(2, n/12);
+
+      function tick(){
+        if (!playing) return;
+        // lead (square)
+        const lf = major(lead[step % patternLen]-12);
+        tone(lf, 0.20, "square", musicGain);
+
+        // bass (triangle, root / fifth)
+        const bassLine = [ -24, -24, -19, -24,  -24, -24, -19, -24,  -22, -22, -17, -22,  -22, -22, -17, -22 ];
+        tone(major(bassLine[step%patternLen]), 0.25, "triangle", musicGain);
+
+        // hat on every 8th
+        if (step % 2 === 0) noise(0.04, 0.08);
+
+        step = (step + 1) % patternLen;
+        seqTimer = setTimeout(tick, spb*1000); // schedule next
+      }
+      tick();
+    }
+
+    function stopMusic(){
+      playing = false;
+      musicBtn.textContent = "▶️ Music";
+      if (seqTimer) clearTimeout(seqTimer), seqTimer=null;
+    }
+
+    musicBtn.addEventListener("click", ()=>{
+      if (!playing) startMusic(); else stopMusic();
+    });
+    vol.addEventListener("input", ()=>{
+      ensureAC();
+      musicGain.gain.value = Number(vol.value);
+    });
+
+    // SFX helpers
+    const sfx = {
+      found(){ tone(880,.12,"square"); setTimeout(()=>tone(1320,.12,"square"),120); },
+      add(){ tone(760,.10,"square"); setTimeout(()=>tone(920,.10,"square"),100); },
+      delete(){ tone(220,.10,"sawtooth"); setTimeout(()=>tone(180,.12,"sawtooth"),100); },
+      clear(){ noise(.08,.25); tone(400,.08,"triangle"); }
+    };
+
+    /* ========= UI/CONFETTI ========= */
+
     const burstEmojis = ["🐱","🐾","✨","😺","💖","🌟","🎉"];
     function burst(x=innerWidth/2,y=90){
       for(let i=0;i<16;i++){
@@ -225,18 +340,16 @@
       e.textContent = floaters[Math.floor(Math.random()*floaters.length)];
       const x = Math.random()*innerWidth;
       const dx = (Math.random()*2-1)*160;
-      const dur = 16 + Math.random()*14; // 16-30s
+      const dur = 18 + Math.random()*16; // 18-34s
       e.style.setProperty("--x", x+"px");
       e.style.setProperty("--dx", dx+"px");
       e.style.setProperty("--dur", dur+"s");
-      e.style.left = "0"; // x via transform
-      e.style.top = "0";
+      e.style.left = "0"; e.style.top = "0";
       field.appendChild(e);
       setTimeout(()=>e.remove(), dur*1000 + 100);
     }
-    // spawn a few immediately, then steady stream
-    for(let i=0;i<16;i++) spawnFloater();
-    setInterval(spawnFloater, 1200);
+    for(let i=0;i<18;i++) spawnFloater();
+    setInterval(spawnFloater, 1100);
 
     function showToast(msg){
       toast.textContent = msg;
@@ -246,8 +359,14 @@
     function uiStatus(ok, msg){ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; }
     function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
 
+    /* ========= DATA + RENDER ========= */
+
     const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
     let expanded = false, lastTotal = 0;
+
+    const score = $("score"), bar = $("bar"), gameNameEl = $("gameName");
+    const activity = $("activity"), cats = $("cats"), adminAdd = $("adminAdd"), adminActions = $("adminActions");
+    const foundResult = $("foundResult"), moreToggle = $("moreToggle");
 
     function render(){
       gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
@@ -276,7 +395,7 @@
       if (isAdmin){
         cats.querySelectorAll("[data-del]").forEach(btn=>{
           btn.onclick = async ()=>{
-            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); ding(340,120); burst(); }
+            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); sfx.delete(); burst(); }
             catch(e){ uiStatus(false, e.message||e); }
           }
         });
@@ -306,7 +425,7 @@
         const color = $("fColor").value, location = $("fLoc").value;
         await post({ action:"found", color, location });
         foundResult.textContent = "Nice! One revealed 🎉";
-        ding(880,120); setTimeout(()=>ding(1320,120),120); burst();
+        sfx.found(); burst();
       }catch(e){
         uiStatus(false, (e?.message||e));
         foundResult.textContent = "";
@@ -318,13 +437,13 @@
         const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
         await post({ action:"addHidden", color, location, name });
         $("aName").value = "";
-        ding(700,120); burst();
+        sfx.add(); burst();
       }catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
     });
 
     $("clearHistory").addEventListener("click", async ()=>{
       if(!confirm("Clear the whole activity log?")) return;
-      try{ await post({ action:"clearHistory" }); ding(300,120); }
+      try{ await post({ action:"clearHistory" }); sfx.clear(); }
       catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
     });
 
@@ -335,7 +454,7 @@
         const data = await get();
         if (typeof lastTotal === "number" && data.total > lastTotal) {
           showToast("✨ Emyl added a new cat!");
-          burst();
+          sfx.add(); burst();
         }
         lastTotal = data.total;
         Object.assign(state, data); render();
