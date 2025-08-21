@@ -5,40 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lil Cat Hunt 🐾</title>
 
-  <!-- Friendly, round headings + readable body -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      /* Neon dark palette */
-      --bg1:#0a0514; --bg2:#140826; --bg3:#1a0f2e;         /* deep plum */
-      --neon1:#ff3fa5; --neon2:#bf5af2; --neon3:#7a5cff;   /* pinks/purples */
-      --text:#f8f7fb; --muted:#b7a9cc;
-      --accent:#ff3fa5;
-
+      --bg1:#0a0514; --bg2:#140826; --bg3:#1a0f2e;
+      --neon1:#ff3fa5; --neon2:#bf5af2; --neon3:#7a5cff;
+      --text:#f8f7fb; --muted:#b7a9cc; --accent:#ff3fa5;
       --ok:#0e2a19; --okb:#22c55e; --oktxt:#d1fae5;
       --err:#2a0e18; --errb:#fb7185; --errtxt:#ffe4e6;
-
-      --card-bg: rgba(20, 10, 32, .55);    /* glass */
+      --card-bg: rgba(20, 10, 32, .58);
       --card-brd: rgba(255, 255, 255, .10);
       --ring: rgba(255,63,165,.25);
     }
-
     html,body{height:100%;margin:0}
     body{
       color:var(--text);
       font-family: "Baloo 2","Nunito",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-
-      /* Animated, moody gradient */
       background:
         radial-gradient(60vmax 60vmax at 10% 20%, rgba(255,63,165,.25) 0%, transparent 60%),
         radial-gradient(60vmax 60vmax at 80% 15%, rgba(191,90,242,.25) 0%, transparent 60%),
         radial-gradient(60vmax 60vmax at 50% 100%, rgba(122,92,255,.25) 0%, transparent 60%),
         conic-gradient(from 0deg at 50% 50%, var(--bg1), var(--bg2), var(--bg3), var(--bg1));
       background-size: 140% 140%, 140% 140%, 140% 140%, 300% 300%;
-      animation: swirl1 30s linear infinite, swirl2 36s linear infinite reverse, swirl3 48s linear infinite, hue 40s linear infinite;
+      animation: swirl1 28s linear infinite, swirl2 32s linear infinite reverse, swirl3 40s linear infinite, hue 36s linear infinite;
       overflow-x:hidden;
     }
     @keyframes swirl1 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 50%, 50% 100%, 0% 100%, 100% 100%} }
@@ -46,13 +38,12 @@
     @keyframes swirl3 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 0%, 50% 50%, 0% 50%, 100% 0%} }
     @keyframes hue { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
 
-    /* Floating emoji field behind content */
     .emoji-field{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0}
-    .drift{ position:absolute; font-size:22px; opacity:.9; animation: drift var(--dur) linear infinite; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
+    .drift{ position:absolute; font-size:24px; opacity:.9; animation: drift var(--dur) linear forwards; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
     @keyframes drift { 
       0%{ transform: translate(var(--x,0), 110vh) rotate(0deg) scale(.9); opacity:.0}
-      6%{ opacity:.85 }
-      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10vh) rotate(360deg) scale(1.2); opacity:0 }
+      8%{ opacity:.9 }
+      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10vh) rotate(540deg) scale(1.25); opacity:0 }
     }
 
     .wrap{ max-width:1000px; margin:0 auto; padding:28px; position:relative; z-index:1 }
@@ -70,9 +61,7 @@
       background: var(--card-bg);
       border: 1px solid var(--card-brd);
       border-radius: 18px;
-      box-shadow:
-        0 8px 28px rgba(191,90,242,.25),
-        inset 0 0 0 1px rgba(255,255,255,.06);
+      box-shadow: 0 8px 28px rgba(191,90,242,.25), inset 0 0 0 1px rgba(255,255,255,.06);
       padding:16px; margin-bottom:16px;
       backdrop-filter: blur(12px) saturate(140%);
     }
@@ -121,7 +110,6 @@
     .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#0b0b14;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,0.45);z-index:20;opacity:0;transition:.22s;border:1px solid rgba(255,255,255,.10)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    /* Sound control bar */
     .soundbar{
       position:fixed; right:16px; bottom:16px; z-index:5;
       display:flex; align-items:center; gap:8px;
@@ -131,10 +119,11 @@
       box-shadow: 0 8px 20px rgba(0,0,0,.35);
     }
     .soundbar input[type=range]{ width:120px }
+    .adminBadge{ margin-left:8px; font-size:12px; background:rgba(122,92,255,.25); border:1px solid rgba(122,92,255,.45); padding:2px 8px; border-radius:999px }
+    .adminLink{ font-size:12px; color:#cdb6ff; cursor:pointer; text-decoration:underline; margin-left:8px }
   </style>
 </head>
 <body>
-  <!-- Continuous floating emojis (behind content) -->
   <div class="emoji-field" id="field"></div>
 
   <div class="wrap">
@@ -142,7 +131,12 @@
     <div id="status"></div>
 
     <div class="card">
-      <div class="title"><span id="gameName">Lil Cat Hunt</span> <span class="pill" id="score">0 / 0</span></div>
+      <div class="title">
+        <span id="gameName">Lil Cat Hunt</span>
+        <span class="pill" id="score">0 / 0</span>
+        <span id="adminBadge" class="adminBadge" style="display:none">Admin</span>
+        <span id="adminChange" class="adminLink">change admin code</span>
+      </div>
       <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
       <div class="progress" style="margin-top:10px"><div class="bar" id="bar" style="width:0%"></div></div>
     </div>
@@ -194,9 +188,8 @@
 
   <div id="toast" class="toast"></div>
 
-  <!-- Sound controls -->
   <div class="soundbar">
-    <button id="musicToggle" class="btn ghost">▶️ Music</button>
+    <button id="musicToggle" class="btn ghost">▶️ Track 1</button>
     <span class="muted" style="font-size:12px">Vol</span>
     <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
   </div>
@@ -209,27 +202,43 @@
     const gameNameEl = $("gameName"), score = $("score"), bar = $("bar");
     const foundResult = $("foundResult"), activity = $("activity"), cats = $("cats");
     const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
+    const adminBadge = $("adminBadge"), adminChange = $("adminChange");
 
-    const params = new URLSearchParams(location.search);
-    const adminCode = params.get("admin");
-    const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
+    /* ===== Admin detection: URL param OR localStorage; send header + QS ===== */
+    const urlParams = new URLSearchParams(location.search);
+    let adminCode = urlParams.get("admin") || localStorage.getItem("catHuntAdminCode") || "";
+    if (urlParams.get("admin")) localStorage.setItem("catHuntAdminCode", adminCode);
     const isAdmin = !!adminCode;
+    const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
 
-    /* ========= Fancy AUDIO ========= */
+    if (isAdmin) adminBadge.style.display = "inline-block";
+    adminChange.onclick = ()=>{
+      const n = prompt("Enter admin code (will save in this device only):", adminCode || "");
+      if (n !== null) {
+        adminCode = n.trim();
+        if (adminCode) localStorage.setItem("catHuntAdminCode", adminCode); else localStorage.removeItem("catHuntAdminCode");
+        location.href = adminCode ? (`?admin=${encodeURIComponent(adminCode)}`) : location.pathname;
+      }
+    };
 
-    let AC, master, musicGain, sfxGain, playing=false;
-    const musicBtn = $("musicToggle");
-    const vol = $("vol");
+    /* ========= AUDIO (chiptune + SFX) ========= */
+    let AC, master, musicGain, sfxGain, playing=false, track=0, seqTimer=null, step=0;
+    const musicBtn = $("musicToggle"); const vol = $("vol");
 
     function ensureAC(){
-      if (AC) return;
-      AC = new (window.AudioContext||window.webkitAudioContext)();
-      master = AC.createGain(); master.gain.value = 0.9; master.connect(AC.destination);
-      musicGain = AC.createGain(); musicGain.gain.value = Number(vol.value); musicGain.connect(master);
-      sfxGain = AC.createGain(); sfxGain.gain.value = 0.7; sfxGain.connect(master);
+      if (!AC) {
+        AC = new (window.AudioContext||window.webkitAudioContext)();
+        master = AC.createGain(); master.gain.value = 0.9; master.connect(AC.destination);
+        musicGain = AC.createGain(); musicGain.gain.value = Number(vol.value); musicGain.connect(master);
+        sfxGain = AC.createGain(); sfxGain.gain.value = Math.min(1, Number(vol.value)*1.1 + 0.2); sfxGain.connect(master);
+      }
+      if (AC.state === "suspended") AC.resume();
     }
+    // wake AudioContext on first user gesture (mobile Safari etc.)
+    ["pointerdown","click","touchstart"].forEach(evt=>{
+      window.addEventListener(evt, ()=>{ ensureAC(); }, { once:true, passive:true });
+    });
 
-    // simple tone
     function tone(freq=880, dur=0.12, type="square", gainNode=sfxGain){
       ensureAC();
       const o = AC.createOscillator(), g = AC.createGain();
@@ -240,7 +249,6 @@
       o.connect(g); g.connect(gainNode);
       o.start(); o.stop(AC.currentTime+dur+0.02);
     }
-    // noise burst (for hats)
     function noise(dur=0.06, gain=0.15){
       ensureAC();
       const bufferSize = AC.sampleRate * dur;
@@ -254,56 +262,52 @@
       src.start(); src.stop(AC.currentTime+dur);
     }
 
-    // chiptune loop (tiny sequencer)
-    let seqTimer=null, step=0;
+    // 4 tiny tracks (lead/bass patterns); click cycles tracks; long-press toggles pause/play
+    const tracks = [
+      { tempo:124, lead:[0,4,7,12, 0,4,7,12, 2,5,9,14, 2,5,9,14], bass:[-24,-24,-19,-24, -24,-24,-19,-24, -22,-22,-17,-22, -22,-22,-17,-22] },
+      { tempo:132, lead:[0,7,12,7,  2,9,14,9,  -1,5,9,5,  -3,4,7,4], bass:[-24,-19,-24,-31, -22,-17,-22,-29, -23,-19,-23,-30, -24,-19,-24,-31] },
+      { tempo:110, lead:[0,2,4,7,  7,9,11,14,  5,7,9,12,  12,14,16,19], bass:[-24,-24,-19,-24, -19,-19,-17,-19, -22,-22,-19,-22, -24,-24,-19,-24] },
+      { tempo:140, lead:[0,12,7,4,  2,14,9,5,  -1,11,7,2,  -3,9,4,0], bass:[-24,-12,-19,-24, -22,-10,-17,-22, -23,-12,-19,-23, -24,-12,-19,-24] },
+    ];
+    function freqFromSemitone(base, semi){ return base * Math.pow(2, semi/12); }
     function startMusic(){
       ensureAC();
       if (playing) return;
-      playing = true;
-      musicBtn.textContent = "⏸️ Music";
-      const tempo = 120; // BPM
-      const spb = 60/tempo; // seconds per beat
-      const patternLen = 16;
-
-      // lead notes (in semitones, C major-ish)
-      const lead = [0,4,7,12,  0,4,7,12,  2,5,9,14,  2,5,9,14]; // arps
-      const baseFreq = 440; // A4
-      const major = n => baseFreq * Math.pow(2, n/12);
-
+      playing = true; musicBtn.textContent = `⏸️ Track ${track+1}`;
+      const baseFreq = 440; step = 0; const patLen = 16;
       function tick(){
         if (!playing) return;
-        // lead (square)
-        const lf = major(lead[step % patternLen]-12);
-        tone(lf, 0.20, "square", musicGain);
-
-        // bass (triangle, root / fifth)
-        const bassLine = [ -24, -24, -19, -24,  -24, -24, -19, -24,  -22, -22, -17, -22,  -22, -22, -17, -22 ];
-        tone(major(bassLine[step%patternLen]), 0.25, "triangle", musicGain);
-
-        // hat on every 8th
-        if (step % 2 === 0) noise(0.04, 0.08);
-
-        step = (step + 1) % patternLen;
-        seqTimer = setTimeout(tick, spb*1000); // schedule next
+        const { tempo, lead, bass } = tracks[track];
+        const spb = 60/tempo;
+        tone(freqFromSemitone(baseFreq, lead[step%patLen]-12), 0.20, "square", musicGain);
+        tone(freqFromSemitone(baseFreq, bass[step%patLen]), 0.22, "triangle", musicGain);
+        if (step % 2 === 0) noise(0.03, 0.08);
+        step = (step+1)%patLen;
+        seqTimer = setTimeout(tick, spb*1000);
       }
       tick();
     }
-
     function stopMusic(){
-      playing = false;
-      musicBtn.textContent = "▶️ Music";
-      if (seqTimer) clearTimeout(seqTimer), seqTimer=null;
+      playing = false; if (seqTimer) clearTimeout(seqTimer), seqTimer=null;
+      musicBtn.textContent = `▶️ Track ${track+1}`;
     }
-
     musicBtn.addEventListener("click", ()=>{
-      if (!playing) startMusic(); else stopMusic();
+      ensureAC();
+      // if playing → switch to next track; if paused → start current track
+      if (playing){ stopMusic(); track = (track+1) % tracks.length; startMusic(); showToast(`🎶 Track ${track+1}`); }
+      else { startMusic(); showToast(`🎶 Track ${track+1}`); }
     });
+    // long-press toggles pause/play
+    let pressT=null;
+    musicBtn.addEventListener("pointerdown", ()=>{ pressT = setTimeout(()=>{ if (playing) stopMusic(); else startMusic(); }, 450); });
+    musicBtn.addEventListener("pointerup", ()=>{ if (pressT) clearTimeout(pressT); });
+    musicBtn.addEventListener("pointerleave", ()=>{ if (pressT) clearTimeout(pressT); });
     vol.addEventListener("input", ()=>{
       ensureAC();
       musicGain.gain.value = Number(vol.value);
+      sfxGain.gain.value = Math.min(1, Number(vol.value)*1.1 + 0.2);
     });
 
-    // SFX helpers
     const sfx = {
       found(){ tone(880,.12,"square"); setTimeout(()=>tone(1320,.12,"square"),120); },
       add(){ tone(760,.10,"square"); setTimeout(()=>tone(920,.10,"square"),100); },
@@ -312,6 +316,10 @@
     };
 
     /* ========= UI/CONFETTI ========= */
+    const toast = $("toast");
+    function showToast(msg){ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1800); }
+    function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
+    function uiStatus(ok, msg){ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; }
 
     const burstEmojis = ["🐱","🐾","✨","😺","💖","🌟","🎉"];
     function burst(x=innerWidth/2,y=90){
@@ -322,51 +330,35 @@
         s.style.left=x+"px"; s.style.top=y+"px"; s.style.pointerEvents="none";
         s.style.transition="transform .9s ease, opacity .9s ease"; s.style.opacity="1";
         document.body.appendChild(s);
-        const dx=(Math.random()*2-1)*180, dy=- (80+Math.random()*150), r=(Math.random()*2-1)*40;
-        requestAnimationFrame(()=>{
-          s.style.transform=`translate(${dx}px, ${dy}px) rotate(${r}deg) scale(1.2)`;
-          s.style.opacity="0";
-        });
+        const dx=(Math.random()*2-1)*200, dy=- (100+Math.random()*170), r=(Math.random()*2-1)*50;
+        requestAnimationFrame(()=>{ s.style.transform=`translate(${dx}px, ${dy}px) rotate(${r}deg) scale(1.25)`; s.style.opacity="0"; });
         setTimeout(()=>s.remove(), 950);
       }
     }
 
-    // Continuous floating emoji field
+    // Faster, denser floating emojis
     const field = $("field");
-    const floaters = ["🐱","🐾","😺","✨","🧶","💫"];
+    const floaters = ["🐱","🐾","😺","✨","🧶","💫","🪄"];
     function spawnFloater(){
       const e = document.createElement("div");
       e.className="drift";
       e.textContent = floaters[Math.floor(Math.random()*floaters.length)];
       const x = Math.random()*innerWidth;
-      const dx = (Math.random()*2-1)*160;
-      const dur = 18 + Math.random()*16; // 18-34s
+      const dx = (Math.random()*2-1)*200;
+      const dur = 10 + Math.random()*10; // 10-20s faster
       e.style.setProperty("--x", x+"px");
       e.style.setProperty("--dx", dx+"px");
       e.style.setProperty("--dur", dur+"s");
       e.style.left = "0"; e.style.top = "0";
       field.appendChild(e);
-      setTimeout(()=>e.remove(), dur*1000 + 100);
+      setTimeout(()=>e.remove(), dur*1000 + 200);
     }
-    for(let i=0;i<18;i++) spawnFloater();
-    setInterval(spawnFloater, 1100);
-
-    function showToast(msg){
-      toast.textContent = msg;
-      toast.classList.add("show");
-      setTimeout(()=>toast.classList.remove("show"), 1800);
-    }
-    function uiStatus(ok, msg){ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; }
-    function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
+    for(let i=0;i<22;i++) spawnFloater();
+    setInterval(spawnFloater, 700); // faster spawn
 
     /* ========= DATA + RENDER ========= */
-
     const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
     let expanded = false, lastTotal = 0;
-
-    const score = $("score"), bar = $("bar"), gameNameEl = $("gameName");
-    const activity = $("activity"), cats = $("cats"), adminAdd = $("adminAdd"), adminActions = $("adminActions");
-    const foundResult = $("foundResult"), moreToggle = $("moreToggle");
 
     function render(){
       gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
@@ -385,6 +377,7 @@
       moreToggle.textContent = expanded ? "Show less" : "Show more";
       adminAdd.style.display = isAdmin ? "block" : "none";
       adminActions.style.display = isAdmin ? "flex" : "none";
+      adminBadge.style.display = isAdmin ? "inline-block" : "none";
 
       cats.innerHTML = (state.hidden_cats||[]).map(c=>{
         const left = `${c.found?'✅':'❓'} <b>${escapeHTML(c.name||'🫥 Hidden')}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span>`;
@@ -405,13 +398,18 @@
     moreToggle.onclick = ()=>{ expanded = !expanded; render(); };
 
     async function get(){
-      const r = await fetch(FN + adminQS);
+      const url = FN + (adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "");
+      const r = await fetch(url, { headers: adminCode ? { "x-admin-code": adminCode } : {} });
       if(!r.ok){ throw new Error(await r.text()); }
       return r.json();
     }
     async function post(body){
-      const url = FN + adminQS;
-      const r = await fetch(url,{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+      const url = FN + (adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "");
+      const r = await fetch(url,{
+        method:"POST",
+        headers: Object.assign({ 'content-type':'application/json' }, adminCode ? { "x-admin-code": adminCode } : {}),
+        body: JSON.stringify(body)
+      });
       const txt = await r.text();
       let json; try{ json = JSON.parse(txt) }catch{ json = null }
       if(!r.ok){ throw new Error(json?.error || txt || r.status); }
@@ -447,7 +445,7 @@
       catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
     });
 
-    // Poll every 15s (player only) for "NEW CAT!" toast
+    // Poll every 12s (player only) for "NEW CAT!" toast
     setInterval(async ()=>{
       try{
         if (isAdmin) return;
@@ -459,7 +457,7 @@
         lastTotal = data.total;
         Object.assign(state, data); render();
       }catch{}
-    }, 15000);
+    }, 12000);
 
     // boot
     (async ()=>{
