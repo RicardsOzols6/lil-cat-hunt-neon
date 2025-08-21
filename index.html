@@ -23,7 +23,7 @@
     html,body{height:100%;margin:0}
     body{
       color:var(--text);
-      font-family: "Baloo 2","Nunito",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      font-family:"Baloo 2","Nunito",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       background:
         radial-gradient(60vmax 60vmax at 10% 20%, rgba(255,63,165,.25) 0%, transparent 60%),
         radial-gradient(60vmax 60vmax at 80% 15%, rgba(191,90,242,.25) 0%, transparent 60%),
@@ -38,12 +38,16 @@
     @keyframes swirl3 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 0%, 50% 50%, 0% 50%, 100% 0%} }
     @keyframes hue { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
 
-    .emoji-field{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0}
+    /* FULL-SCREEN EMOJI LAYER (fix mobile cutoff) */
+    .emoji-field{
+      position:fixed; left:0; top:0; width:100vw; height:100dvh;
+      overflow:hidden; pointer-events:none; z-index:0;
+    }
     .drift{ position:absolute; font-size:24px; opacity:.9; animation: drift var(--dur) linear forwards; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
-    @keyframes drift { 
-      0%{ transform: translate(var(--x,0), 110vh) rotate(0deg) scale(.9); opacity:.0}
+    @keyframes drift {
+      0%{ transform: translate(var(--x,0), 110dvh) rotate(0deg) scale(.9); opacity:.0}
       8%{ opacity:.9 }
-      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10vh) rotate(540deg) scale(1.25); opacity:0 }
+      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10dvh) rotate(540deg) scale(1.25); opacity:0 }
     }
     .burst{ position:absolute; font-size:22px; animation: pop .6s ease-out forwards; }
     @keyframes pop {
@@ -52,7 +56,7 @@
       100%{ transform: translate(var(--tx),var(--ty)) scale(1.4) rotate(360deg); opacity:0 }
     }
 
-    .wrap{ max-width:1000px; margin:0 auto; padding:28px; padding-bottom:120px; position:relative; z-index:1 }
+    .wrap{ max-width:1000px; margin:0 auto; padding:28px; padding-bottom:28px; position:relative; z-index:1 }
 
     h1{
       margin:0 0 14px 0;
@@ -116,16 +120,19 @@
     .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#0b0b14;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,0.45);z-index:20;opacity:0;transition:.22s;border:1px solid rgba(255,255,255,.10)}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    .soundbar{
-      position:fixed; right:16px; bottom:16px; z-index:5;
-      display:flex; align-items:center; gap:8px;
-      background: rgba(255,255,255,.06);
-      backdrop-filter: blur(10px) saturate(140%);
-      border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:8px 10px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+    /* NEW: audio footer card (sticky, safe-area-aware) */
+    .audio-footer{
+      position: sticky;
+      bottom: calc(env(safe-area-inset-bottom,0px) + 12px);
+      z-index: 3;
+      display:flex; align-items:center; gap:10px; justify-content:flex-end;
+      padding:10px 12px;
     }
-    .soundbar input[type=range]{ width:130px }
-    .adminBadge{ margin-left:8px; font-size:12px; background:rgba(122,92,255,.25); border:1px solid rgba(122,92,255,.45); padding:2px 8px; border-radius:999px }
+    .audio-footer .muted{ font-size:12px }
+    .audio-footer input[type=range]{ width:160px }
+    @media (min-width:981px){
+      .audio-footer{ justify-content:flex-end }
+    }
   </style>
 </head>
 <body>
@@ -139,7 +146,7 @@
       <div class="title">
         <span id="gameName">Lil Cat Hunt</span>
         <span class="pill" id="score">0 / 0</span>
-        <span id="adminBadge" class="adminBadge" style="display:none">Admin</span>
+        <span id="adminBadge" class="chip" style="display:none">Admin</span>
       </div>
       <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
       <div class="progress" style="margin-top:10px"><div class="bar" id="bar" style="width:0%"></div></div>
@@ -188,15 +195,16 @@
       <div class="title">Cat List</div>
       <ul class="list" id="cats"></ul>
     </div>
+
+    <!-- Sticky audio footer card (in-flow, no overlap) -->
+    <div class="card audio-footer">
+      <button id="musicToggle" class="btn ghost">▶️ Track 1</button>
+      <span class="muted">Vol</span>
+      <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
+    </div>
   </div>
 
   <div id="toast" class="toast"></div>
-
-  <div class="soundbar" id="soundbar">
-    <button id="musicToggle" class="btn ghost">▶️ Track 1</button>
-    <span class="muted" style="font-size:12px">Vol</span>
-    <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
-  </div>
 
   <script>
   (function(){
@@ -210,19 +218,17 @@
     const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
     const adminBadge = $("adminBadge");
 
-    /* helpers */
     const showToast = (msg)=>{ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1800); };
     const escapeHTML=(s)=>String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
     const uiStatus=(ok,msg)=>{ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; };
 
-    /* ADMIN – only when ?admin= is present */
+    /* ADMIN only when ?admin= is present */
     const urlParams = new URLSearchParams(location.search);
-    const adminCode = urlParams.get("admin") || "";  // no localStorage, no change-link
+    const adminCode = urlParams.get("admin") || "";
     const isAdmin = !!adminCode;
     if (isAdmin) adminBadge.style.display = "inline-block";
-    const adminQS = isAdmin ? `?admin=${encodeURIComponent(adminCode)}` : "";
 
-    /* AUDIO */
+    /* AUDIO — in-flow footer */
     let AC, master, musicGain, sfxGain, playing=false, track=0, seqTimer=null, step=0;
     const musicBtn = $("musicToggle"); const vol = $("vol");
 
