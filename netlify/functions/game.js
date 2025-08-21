@@ -26,13 +26,13 @@ export async function handler(event) {
   if (!CONN) return err(500, "Missing DATABASE_URL / NETLIFY_DATABASE_URL");
 
   try {
-    const isAdmin =
-      (event.queryStringParameters && event.queryStringParameters.admin === ADMIN_CODE) ||
-      false;
+    const isAdmin = (() => {
+      const p = event.queryStringParameters || {};
+      return ADMIN_CODE ? p.admin === ADMIN_CODE : false;
+    })();
 
     const sql = neon(CONN);
 
-    // ONE statement per call (Neon prepared-stmt rule)
     await sql`create table if not exists cat_game (
       id text primary key,
       found int not null default 0,
@@ -62,7 +62,15 @@ export async function handler(event) {
       return seed;
     };
 
+    const normalizeCounts = (s) => {
+      const cats = s.hidden_cats || [];
+      s.total = cats.length;
+      s.found = cats.filter(c => c.found).length;
+      return s;
+    };
+
     const saveState = async (s) => {
+      normalizeCounts(s);
       const rows = await sql`
         insert into cat_game (id, found, total, game_name, hidden_cats, history, updated_at)
         values (${id}, ${s.found}, ${s.total}, ${s.game_name},
@@ -80,38 +88,27 @@ export async function handler(event) {
       return rows[0];
     };
 
-    // Mask names of unfound cats (and their history) for non-admins
     const maskForPlayer = (state) => {
       const HIDDEN = "🫥 Hidden";
       const s = structuredClone(state);
-      if (!s) return s;
-
       if (!isAdmin) {
-        s.hidden_cats = (s.hidden_cats || []).map(c =>
-          c.found ? c : { ...c, name: HIDDEN }
-        );
-        s.history = (s.history || []).map(h => {
-          if (h.type === "found+") return h; // reveal name when found
-          // hide add events name
-          return { ...h, name: HIDDEN };
-        });
+        s.hidden_cats = (s.hidden_cats || []).map(c => c.found ? c : { ...c, name: HIDDEN });
+        s.history = (s.history || []).map(h => (h.type === "found+") ? h : { ...h, name: HIDDEN });
       }
       return s;
     };
 
-    // Pick most probable cat
     const pickCandidateIndex = (cats, color, location) => {
       let i = cats.findIndex(c => !c.found && eq(c.color,color) && eq(c.location,location));
       if (i >= 0) return i;
-      i = cats.findIndex(c => !c.found && eq(c.color,color));
-      if (i >= 0) return i;
-      i = cats.findIndex(c => !c.found && eq(c.location,location));
-      if (i >= 0) return i;
-      return cats.findIndex(c => !c.found);
+      i = cats.findIndex(c => !c.found && eq(c.color,color)); if (i >= 0) return i;
+      i = cats.findIndex(c => !c.found && eq(c.location,location)); if (i >= 0) return i;
+      return -1; // ← no more “ad-hoc” guesses; must be an existing hidden cat
     };
 
     if (event.httpMethod === "GET") {
       const raw = await getState();
+      normalizeCounts(raw);
       return ok(maskForPlayer(raw));
     }
 
@@ -121,6 +118,7 @@ export async function handler(event) {
       const action = body.action;
 
       const s = await getState();
+      normalizeCounts(s);
 
       // Admin-only actions
       if (["addHidden","deleteCat","clearHistory","renameGame"].includes(action) && !isAdmin) {
@@ -137,10 +135,9 @@ export async function handler(event) {
         const { color, location } = body;
         let name = body.name?.trim();
         if (!color || !location) return err(400, "color & location required");
-        if (!name) name = `🫥 Hidden`; // store a placeholder; masked anyway for players
+        if (!name) name = `🫥 Hidden`;
         const cat = { id: Date.now(), name, color, location, found: false, created_at: nowISO() };
         s.hidden_cats = [...(s.hidden_cats||[]), cat];
-        s.total += 1;
         s.history = [
           { type:"total+", delta:1, where:location, color, name: cat.name, when: nowISO() },
           ...(s.history||[])
@@ -151,13 +148,9 @@ export async function handler(event) {
 
       if (action === "deleteCat") {
         const { id: cid } = body;
-        const cats = s.hidden_cats || [];
-        const idx = cats.findIndex(c => c.id === cid);
+        const idx = (s.hidden_cats||[]).findIndex(c => c.id === cid);
         if (idx === -1) return err(404, "Cat not found");
-        const wasFound = !!cats[idx].found;
-        s.hidden_cats = cats.filter(c => c.id !== cid);
-        s.total = Math.max(0, s.total - 1);
-        if (wasFound) s.found = Math.max(0, s.found - 1);
+        s.hidden_cats.splice(idx,1);
         s.history = [{ type:"delete", id: cid, when: nowISO() }, ...(s.history||[])].slice(0,200);
         const ns = await saveState(s);
         return ok(maskForPlayer(ns));
@@ -173,17 +166,14 @@ export async function handler(event) {
         const { color, location } = body;
         const cats = s.hidden_cats || [];
         const idx = pickCandidateIndex(cats, color, location);
+        if (idx === -1) return err(409, "No matching hidden cats. Ask Emyl to add some! 🐱");
 
-        if (idx === -1) {
-          // nothing to reveal; add an ad-hoc found note
-          s.history = [{ type:"found+", delta:1, where:location, color, name:"(ad-hoc)", when: nowISO() }, ...(s.history||[])].slice(0,200);
-          s.found += 1;
-        } else {
-          const chosen = cats[idx];
-          s.hidden_cats[idx] = { ...chosen, found: true, found_at: nowISO() };
-          s.found += 1;
-          s.history = [{ type:"found+", delta:1, where: chosen.location, color: chosen.color, name: chosen.name, when: nowISO() }, ...(s.history||[])].slice(0,200);
-        }
+        const chosen = cats[idx];
+        s.hidden_cats[idx] = { ...chosen, found: true, found_at: nowISO() };
+        s.history = [
+          { type:"found+", delta:1, where: chosen.location, color: chosen.color, name: chosen.name, when: nowISO() },
+          ...(s.history||[])
+        ].slice(0,200);
 
         const ns = await saveState(s);
         return ok(maskForPlayer(ns));
