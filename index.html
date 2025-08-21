@@ -38,16 +38,22 @@
     @keyframes swirl3 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 0%, 50% 50%, 0% 50%, 100% 0%} }
     @keyframes hue { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
 
-    /* FULL-SCREEN EMOJI LAYER (fix mobile cutoff) */
+    /* ==== FIXED: FULL-SCREEN EMOJI LAYER (no mobile cutoff) ==== */
     .emoji-field{
-      position:fixed; left:0; top:0; width:100vw; height:100dvh;
-      overflow:hidden; pointer-events:none; z-index:0;
+      position:fixed;
+      inset:-25vh -10vw -25vh -10vw;   /* extend beyond edges */
+      width:auto; height:auto;
+      overflow:visible;                 /* allow drift outside */
+      pointer-events:none;
+      z-index:0;
+      transform:translateZ(0);          /* nudge Safari to composite */
+      will-change:transform;
     }
     .drift{ position:absolute; font-size:24px; opacity:.9; animation: drift var(--dur) linear forwards; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
     @keyframes drift {
-      0%{ transform: translate(var(--x,0), 110dvh) rotate(0deg) scale(.9); opacity:.0}
-      8%{ opacity:.9 }
-      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10dvh) rotate(540deg) scale(1.25); opacity:0 }
+      0%{   transform: translate(var(--x,0), 120vh) rotate(0deg)   scale(.9);  opacity:0 }
+      8%{   opacity:.95 }
+      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -30vh) rotate(540deg) scale(1.25); opacity:0 }
     }
     .burst{ position:absolute; font-size:22px; animation: pop .6s ease-out forwards; }
     @keyframes pop {
@@ -318,14 +324,15 @@
       clear(){ noise(.08,.25); tone(400,.08,"triangle"); }
     };
 
-    /* Emoji floaters & bursts */
+    /* Emoji floaters & bursts (updated spawn uses visualViewport width) */
     const field = $("field");
     const floaters = ["🐱","🐾","😺","✨","🧶","💫","🪄"];
     function spawnFloater(){
       const e = document.createElement("div");
       e.className="drift";
       e.textContent = floaters[Math.floor(Math.random()*floaters.length)];
-      const x = Math.random()*innerWidth;
+      const vw = (window.visualViewport?.width || innerWidth);
+      const x = Math.random()*vw;
       const dx = (Math.random()*2-1)*200;
       const dur = 10 + Math.random()*10;
       e.style.setProperty("--x", x+"px");
