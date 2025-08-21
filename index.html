@@ -4,270 +4,356 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lil Cat Hunt 🐾</title>
+
+  <!-- Fun, round, readable font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --card:#ffffff; --txt:#0f172a; --muted:#64748b; --accent:#ec4899;
-      --ok:#dcfce7; --okb:#bbf7d0; --oktxt:#065f46; --err:#fee2e2; --errb:#fecaca; --errtxt:#7f1d1d;
-      --chip:#fde68a;
+      --txt:#0f172a; --muted:#64748b; --accent:#ff4da6;
+      --ok:#dcfce7; --okb:#bbf7d0; --oktxt:#065f46;
+      --err:#fee2e2; --errb:#fecaca; --errtxt:#7f1d1d;
+      --card-bg: rgba(255,255,255,.68);
+      --card-brd: rgba(255,255,255,.35);
+      --ring: rgba(255,77,166,.25);
     }
-    html,body{margin:0;padding:0;height:100%}
+
+    html,body{height:100%;margin:0}
     body{
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      font-family: "Baloo 2","Nunito",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       color:var(--txt);
-      background: radial-gradient(1200px 1200px at 10% 10%, #ffe9f2, transparent 60%),
-                  radial-gradient(1200px 1200px at 90% 20%, #f3e8ff, transparent 60%),
-                  radial-gradient(1200px 1200px at 50% 100%, #e0f2fe, transparent 60%);
-      animation: floatBG 20s linear infinite;
-      background-size: 200% 200%;
+      /* Animated multi-layer gradient */
+      background:
+        radial-gradient(60vmax 60vmax at 10% 20%, #ffd1e6 0%, transparent 55%),
+        radial-gradient(60vmax 60vmax at 90% 15%, #e6d6ff 0%, transparent 55%),
+        radial-gradient(60vmax 60vmax at 50% 90%, #c7f0ff 0%, transparent 55%),
+        conic-gradient(from 0deg at 50% 50%, #ffe3f0, #f7e8ff, #e8fff9, #ffe3f0);
+      background-size: 120% 120%, 120% 120%, 120% 120%, 300% 300%;
+      animation: swirl1 28s linear infinite, swirl2 36s linear infinite reverse, swirl3 42s linear infinite, hue 20s linear infinite;
+      overflow-x:hidden;
     }
-    @keyframes floatBG {
-      0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
-      50%{ background-position: 100% 50%, 0% 50%, 50% 0%; }
-      100%{ background-position: 0% 0%, 100% 0%, 50% 100%; }
+    @keyframes swirl1 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 50%, 50% 100%, 0% 100%, 100% 100%} }
+    @keyframes swirl2 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:50% 100%, 100% 50%, 100% 0%, 0% 0%} }
+    @keyframes swirl3 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 0%, 50% 50%, 0% 50%, 100% 0%} }
+    @keyframes hue { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+
+    /* Floating emoji field behind content */
+    .emoji-field{position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:0}
+    .drift{ position:absolute; font-size:22px; opacity:.9; animation: drift var(--dur) linear infinite; filter: drop-shadow(0 3px 6px rgba(0,0,0,.15)); }
+    @keyframes drift { 
+      0%{ transform: translate(var(--x,0), 110vh) rotate(0deg) scale(.9); opacity:.0}
+      6%{ opacity:1 }
+      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10vh) rotate(360deg) scale(1.2); opacity:0 }
     }
-    .wrap{max-width:980px;margin:0 auto;padding:24px;}
-    h1{margin:0 0 12px 0;letter-spacing:0.2px}
-    .card{background:var(--card);border:2px solid #fecdd3;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;backdrop-filter:saturate(120%) blur(2px)}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+    .wrap{ max-width:1000px; margin:0 auto; padding:28px; position:relative; z-index:1 }
+
+    h1{
+      margin:0 0 14px 0;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height:1.05;
+      letter-spacing:.3px;
+      background: linear-gradient(90deg,#ff4da6,#ff9b6a,#8b5cf6,#22c1c3);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,.6));
+    }
+
+    .card{
+      background: var(--card-bg);
+      border: 1px solid var(--card-brd);
+      border-radius: 18px;
+      box-shadow:
+        0 8px 24px rgba(255,77,166,.12),
+        inset 0 0 0 1px rgba(255,255,255,.35);
+      padding:16px;
+      margin-bottom:16px;
+      backdrop-filter: blur(10px) saturate(140%);
+    }
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .title{font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;gap:10px;align-items:center}
     .muted{color:var(--muted);font-size:12px}
-    .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;background:#f1f5f9}
-    .btn.primary{background:var(--accent);color:white}
-    .btn.ghost{background:white;border:2px solid #e2e8f0}
-    .btn.danger{background:#ef4444;color:white}
-    select,input[type=text]{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;font:inherit;background:#fff}
-    .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#f1f5f9}
-    .chip{background:var(--chip);padding:2px 8px;border-radius:999px;font-size:12px}
-    .progress{height:10px;border-radius:999px;background:#ffe4e6;overflow:hidden}
-    .bar{height:100%;background:linear-gradient(90deg,#e879f9,#fb7185);width:0%}
-    .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-    .li{background:#ffffffb3;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-    .catrow{background:#ffffffb3;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
-    .ok{background:var(--ok);border:2px solid var(--okb);color:var(--oktxt);padding:10px 12px;border-radius:12px;margin-bottom:12px}
-    .err{background:var(--err);border:2px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
-    .section{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    @media (max-width:900px){.section{grid-template-columns:1fr}}
-    .toast{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.2);z-index:20;opacity:0;transition:.2s}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    .emoji{position:fixed;pointer-events:none;font-size:22px;animation:pop 900ms ease-out forwards}
-    @keyframes pop {
-      0%{ transform:translate(var(--x,0),var(--y,0)) scale(.6) rotate(0deg); opacity:1 }
-      100%{ transform:translate(var(--xend,0),var(--yend,-160px)) scale(1.2) rotate(30deg); opacity:0 }
+
+    .btn{
+      appearance:none;border:0;border-radius:14px;padding:10px 14px;
+      font-weight:800;cursor:pointer;background:#f1f5f9; transition:transform .06s ease, box-shadow .15s ease;
     }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px var(--ring) }
+    .btn:active{ transform:translateY(0) }
+    .btn.primary{ background:linear-gradient(180deg,#ff7dbd,#ff4da6); color:white }
+    .btn.ghost{ background:rgba(255,255,255,.8); border:1px solid #e2e8f0 }
+    .btn.danger{ background:#ef4444;color:white }
+
+    select,input[type=text]{
+      border:1px solid rgba(0,0,0,.08);
+      background:rgba(255,255,255,.9);
+      border-radius:14px; padding:10px 12px; outline:none; font:inherit;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+    }
+
+    .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.75); border:1px solid rgba(0,0,0,.06)}
+    .chip{background:#fde68a;padding:2px 8px;border-radius:999px;font-size:12px}
+
+    .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;border:1px solid rgba(0,0,0,.05)}
+    .bar{height:100%;background:linear-gradient(90deg,#ffa6d4,#ff7dbd,#ff9b6a);width:0%; box-shadow: inset 0 0 12px rgba(255,255,255,.7)}
+
+    .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+    .li{background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .catrow{background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
+
+    .ok{background:var(--ok);border:1px solid var(--okb);color:var(--oktxt);padding:10px 12px;border-radius:12px;margin-bottom:12px}
+    .err{background:var(--err);border:1px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
+
+    .section{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:980px){.section{grid-template-columns:1fr}}
+
+    .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#111827;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,0.25);z-index:20;opacity:0;transition:.22s}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>🐾 Lil Cat Hunt</h1>
-  <div id="status"></div>
+  <!-- Continuous floating emojis (behind content) -->
+  <div class="emoji-field" id="field"></div>
 
-  <div class="card">
-    <div class="title"><span id="gameName">Lil Cat Hunt</span> <span class="pill" id="score">0 / 0</span></div>
-    <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
-    <div class="progress" style="margin-top:8px"><div class="bar" id="bar" style="width:0%"></div></div>
-  </div>
+  <div class="wrap">
+    <h1>🐾 Lil Cat Hunt</h1>
+    <div id="status"></div>
 
-  <div class="section">
     <div class="card">
-      <div class="title">Found a Cat</div>
-      <div class="row">
-        <select id="fColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
-        <select id="fLoc">
-          <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
-          <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
-          <option>Storage Room 2</option><option>Hallway</option>
-        </select>
-        <button class="btn primary" id="foundBtn">Count it 🐾</button>
+      <div class="title"><span id="gameName">Lil Cat Hunt</span> <span class="pill" id="score">0 / 0</span></div>
+      <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
+      <div class="progress" style="margin-top:10px"><div class="bar" id="bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="section">
+      <div class="card">
+        <div class="title">Found a Cat</div>
+        <div class="row">
+          <select id="fColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
+          <select id="fLoc">
+            <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
+            <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
+            <option>Storage Room 2</option><option>Hallway</option>
+          </select>
+          <button class="btn primary" id="foundBtn">Count it 🐾</button>
+        </div>
+        <div class="muted" id="foundResult" style="margin-top:6px"></div>
       </div>
-      <div class="muted" id="foundResult" style="margin-top:6px"></div>
-    </div>
 
-    <div class="card" id="adminAdd" style="display:none">
-      <div class="title">Add Cat <span class="chip">Admin</span></div>
-      <div class="row">
-        <select id="aColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
-        <select id="aLoc">
-          <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
-          <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
-          <option>Storage Room 2</option><option>Hallway</option>
-        </select>
-        <input id="aName" type="text" placeholder="Name (Emyl sees this)" />
-        <button class="btn ghost" id="addBtn">Add</button>
+      <div class="card" id="adminAdd" style="display:none">
+        <div class="title">Add Cat <span class="chip">Admin</span></div>
+        <div class="row">
+          <select id="aColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
+          <select id="aLoc">
+            <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
+            <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
+            <option>Storage Room 2</option><option>Hallway</option>
+          </select>
+          <input id="aName" type="text" placeholder="Name (Emyl sees this)" />
+          <button class="btn ghost" id="addBtn">Add</button>
+        </div>
+        <div class="muted">Total goes up when you add cats.</div>
       </div>
-      <div class="muted">Total goes up when you add cats.</div>
+    </div>
+
+    <div class="card">
+      <div class="title">Activity <span id="moreToggle" class="pill" style="cursor:pointer; margin-left:auto">Show more</span></div>
+      <ul class="list" id="activity"></ul>
+      <div id="adminActions" class="row" style="display:none; margin-top:6px">
+        <button class="btn danger" id="clearHistory">Clear activity</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="title">Cat List</div>
+      <ul class="list" id="cats"></ul>
     </div>
   </div>
 
-  <div class="card">
-    <div class="title">Activity <span id="moreToggle" class="pill" style="cursor:pointer; margin-left:auto">Show more</span></div>
-    <ul class="list" id="activity"></ul>
-    <div id="adminActions" class="row" style="display:none; margin-top:6px">
-      <button class="btn danger" id="clearHistory">Clear activity</button>
-    </div>
-  </div>
+  <div id="toast" class="toast"></div>
 
-  <div class="card">
-    <div class="title">Cat List</div>
-    <ul class="list" id="cats"></ul>
-  </div>
-</div>
+  <script>
+  (function(){
+    const FN = "/.netlify/functions/game";
+    const $ = (id)=>document.getElementById(id);
+    const status = $("status"), toast = $("toast");
+    const gameNameEl = $("gameName"), score = $("score"), bar = $("bar");
+    const foundResult = $("foundResult"), activity = $("activity"), cats = $("cats");
+    const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
 
-<div id="toast" class="toast"></div>
+    const params = new URLSearchParams(location.search);
+    const adminCode = params.get("admin");
+    const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
+    const isAdmin = !!adminCode;
 
-<script>
-(function(){
-  const FN = "/.netlify/functions/game";
-  const $ = (id)=>document.getElementById(id);
-  const status = $("status"), toast = $("toast");
-  const gameNameEl = $("gameName"), score = $("score"), bar = $("bar");
-  const foundResult = $("foundResult"), activity = $("activity"), cats = $("cats");
-  const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
+    // Small tones
+    const ding = (f=880, ms=120)=>{ try{
+      const a = new (window.AudioContext||window.webkitAudioContext)();
+      const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination);
+      o.type="sine"; o.frequency.value=f; g.gain.setValueAtTime(0.0001, a.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.28, a.currentTime+0.02);
+      o.start(); o.stop(a.currentTime + ms/1000);
+    }catch{} };
 
-  const params = new URLSearchParams(location.search);
-  const adminCode = params.get("admin");
-  const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
-  const isAdmin = !!adminCode;
-
-  const ding = (f=880, ms=120)=>{ try{
-    const a = new (window.AudioContext||window.webkitAudioContext)();
-    const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination);
-    o.type="sine"; o.frequency.value=f; g.gain.setValueAtTime(0.0001, a.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.3, a.currentTime+0.02);
-    o.start(); o.stop(a.currentTime + ms/1000);
-  }catch{} };
-
-  const emojis = ["🐱","🐾","✨","🎉","😺","💖","🌟"];
-  function burst(x=window.innerWidth/2,y=80){
-    for(let i=0;i<16;i++){
-      const s=document.createElement("div");
-      s.className="emoji"; s.textContent=emojis[i%emojis.length];
-      const dx=(Math.random()*2-1)*180, dy=- (80+Math.random()*140);
-      s.style.left=`${x}px`; s.style.top=`${y}px`;
-      s.style.setProperty('--x','0px'); s.style.setProperty('--y','0px');
-      s.style.setProperty('--xend', dx+'px'); s.style.setProperty('--yend', dy+'px');
-      document.body.appendChild(s);
-      setTimeout(()=>s.remove(), 1000);
-    }
-  }
-  function showToast(msg){
-    toast.textContent = msg;
-    toast.classList.add("show");
-    setTimeout(()=>toast.classList.remove("show"), 1800);
-  }
-
-  function uiStatus(ok, msg){ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; }
-  function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
-
-  const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
-
-  let expanded = false;  // activity collapse
-  let lastTotal = 0;     // for popup polling
-
-  function render(){
-    gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
-    score.textContent = `${state.found} / ${state.total}`;
-    bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
-
-    const logs = state.history || [];
-    const show = expanded ? logs : logs.slice(0,4);
-    activity.innerHTML = show.map(h=>{
-      const icon = h.type==='found+'?'✅':'➕';
-      const name = h.name || '🫥 Hidden';
-      const when = new Date(h.when).toLocaleString();
-      return `<li class="li"><div>${icon} <b>${escapeHTML(name)}</b> <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${when}</div></li>`;
-    }).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
-
-    moreToggle.textContent = expanded ? "Show less" : "Show more";
-    adminAdd.style.display = isAdmin ? "block" : "none";
-    adminActions.style.display = isAdmin ? "flex" : "none";
-
-    cats.innerHTML = (state.hidden_cats||[]).map(c=>{
-      const left = `${c.found?'✅':'❓'} <b>${escapeHTML(c.name||'🫥 Hidden')}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span>`;
-      const del = isAdmin ? `<button class="btn danger" data-del="${c.id}">Delete</button>` : "";
-      return `<li class="catrow">${left} <span style="margin-left:auto"></span>${del}</li>`;
-    }).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
-
-    if (isAdmin){
-      cats.querySelectorAll("[data-del]").forEach(btn=>{
-        btn.onclick = async ()=>{
-          try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); ding(340,120); }
-          catch(e){ uiStatus(false, e.message||e); }
-        }
-      });
-    }
-  }
-
-  moreToggle.onclick = ()=>{ expanded = !expanded; render(); };
-
-  async function get(){
-    const r = await fetch(FN + adminQS);
-    if(!r.ok){ throw new Error(await r.text()); }
-    return r.json();
-  }
-  async function post(body){
-    const url = FN + adminQS;
-    const r = await fetch(url,{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
-    const txt = await r.text();
-    let json; try{ json = JSON.parse(txt) }catch{ json = null }
-    if(!r.ok){ throw new Error(json?.error || txt || r.status); }
-    Object.assign(state, json);
-    render();
-    return json;
-  }
-
-  $("foundBtn").addEventListener("click", async ()=>{
-    try{
-      const color = $("fColor").value, location = $("fLoc").value;
-      await post({ action:"found", color, location });
-      foundResult.textContent = "Nice! One revealed 🎉";
-      ding(880,120); setTimeout(()=>ding(1320,120),120); burst();
-    }catch(e){
-      uiStatus(false, (e?.message||e));
-      foundResult.textContent = "";
-    }
-  });
-
-  $("addBtn").addEventListener("click", async ()=>{
-    try{
-      const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
-      await post({ action:"addHidden", color, location, name });
-      $("aName").value = "";
-      ding(700,120); burst();
-    }catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
-  });
-
-  $("clearHistory").addEventListener("click", async ()=>{
-    if(!confirm("Clear the whole activity log?")) return;
-    try{ await post({ action:"clearHistory" }); ding(300,120); }
-    catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
-  });
-
-  // Poll every 15s: if total increases (and you’re NOT admin), show popup
-  setInterval(async ()=>{
-    try{
-      if (isAdmin) return;
-      const data = await get();
-      if (typeof lastTotal === "number" && data.total > lastTotal) {
-        showToast("✨ Emyl added a new cat!");
-        burst();
+    // Confetti burst (on actions)
+    const burstEmojis = ["🐱","🐾","✨","😺","💖","🌟","🎉"];
+    function burst(x=innerWidth/2,y=90){
+      for(let i=0;i<16;i++){
+        const s=document.createElement("div");
+        s.textContent=burstEmojis[i%burstEmojis.length];
+        s.style.position="fixed"; s.style.fontSize="22px";
+        s.style.left=x+"px"; s.style.top=y+"px"; s.style.pointerEvents="none";
+        s.style.transition="transform .9s ease, opacity .9s ease"; s.style.opacity="1";
+        document.body.appendChild(s);
+        const dx=(Math.random()*2-1)*180, dy=- (80+Math.random()*150), r=(Math.random()*2-1)*40;
+        requestAnimationFrame(()=>{
+          s.style.transform=`translate(${dx}px, ${dy}px) rotate(${r}deg) scale(1.2)`;
+          s.style.opacity="0";
+        });
+        setTimeout(()=>s.remove(), 950);
       }
-      lastTotal = data.total;
-      Object.assign(state, data); render();
-    }catch{}
-  }, 15000);
+    }
 
-  // boot
-  (async ()=>{
-    try{
-      uiStatus(true,"Connecting to database…");
-      const data = await get();
-      lastTotal = data.total;
-      Object.assign(state, data);
-      uiStatus(true,"Connected ✓");
+    // Continuous floating emoji field
+    const field = $("field");
+    const floaters = ["🐱","🐾","😺","✨","🧶","💫"];
+    function spawnFloater(){
+      const e = document.createElement("div");
+      e.className="drift";
+      e.textContent = floaters[Math.floor(Math.random()*floaters.length)];
+      const x = Math.random()*innerWidth;
+      const dx = (Math.random()*2-1)*160;
+      const dur = 16 + Math.random()*14; // 16-30s
+      e.style.setProperty("--x", x+"px");
+      e.style.setProperty("--dx", dx+"px");
+      e.style.setProperty("--dur", dur+"s");
+      e.style.left = "0"; // x via transform
+      e.style.top = "0";
+      field.appendChild(e);
+      setTimeout(()=>e.remove(), dur*1000 + 100);
+    }
+    // spawn a few immediately, then steady stream
+    for(let i=0;i<16;i++) spawnFloater();
+    setInterval(spawnFloater, 1200);
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(()=>toast.classList.remove("show"), 1800);
+    }
+    function uiStatus(ok, msg){ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; }
+    function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
+
+    const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
+    let expanded = false, lastTotal = 0;
+
+    function render(){
+      gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
+      score.textContent = `${state.found} / ${state.total}`;
+      bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
+
+      const logs = state.history || [];
+      const show = expanded ? logs : logs.slice(0,4);
+      activity.innerHTML = show.map(h=>{
+        const icon = h.type==='found+'?'✅':'➕';
+        const name = h.name || '🫥 Hidden';
+        const when = new Date(h.when).toLocaleString();
+        return `<li class="li"><div>${icon} <b>${escapeHTML(name)}</b> <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${when}</div></li>`;
+      }).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
+
+      moreToggle.textContent = expanded ? "Show less" : "Show more";
+      adminAdd.style.display = isAdmin ? "block" : "none";
+      adminActions.style.display = isAdmin ? "flex" : "none";
+
+      cats.innerHTML = (state.hidden_cats||[]).map(c=>{
+        const left = `${c.found?'✅':'❓'} <b>${escapeHTML(c.name||'🫥 Hidden')}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span>`;
+        const del = isAdmin ? `<button class="btn danger" data-del="${c.id}">Delete</button>` : "";
+        return `<li class="catrow">${left} <span style="margin-left:auto"></span>${del}</li>`;
+      }).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
+
+      if (isAdmin){
+        cats.querySelectorAll("[data-del]").forEach(btn=>{
+          btn.onclick = async ()=>{
+            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); ding(340,120); burst(); }
+            catch(e){ uiStatus(false, e.message||e); }
+          }
+        });
+      }
+    }
+
+    moreToggle.onclick = ()=>{ expanded = !expanded; render(); };
+
+    async function get(){
+      const r = await fetch(FN + adminQS);
+      if(!r.ok){ throw new Error(await r.text()); }
+      return r.json();
+    }
+    async function post(body){
+      const url = FN + adminQS;
+      const r = await fetch(url,{method:"POST",headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+      const txt = await r.text();
+      let json; try{ json = JSON.parse(txt) }catch{ json = null }
+      if(!r.ok){ throw new Error(json?.error || txt || r.status); }
+      Object.assign(state, json);
       render();
-    }catch(e){ uiStatus(false, "GET error: "+(e?.message||e)); }
+      return json;
+    }
+
+    $("foundBtn").addEventListener("click", async ()=>{
+      try{
+        const color = $("fColor").value, location = $("fLoc").value;
+        await post({ action:"found", color, location });
+        foundResult.textContent = "Nice! One revealed 🎉";
+        ding(880,120); setTimeout(()=>ding(1320,120),120); burst();
+      }catch(e){
+        uiStatus(false, (e?.message||e));
+        foundResult.textContent = "";
+      }
+    });
+
+    $("addBtn").addEventListener("click", async ()=>{
+      try{
+        const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
+        await post({ action:"addHidden", color, location, name });
+        $("aName").value = "";
+        ding(700,120); burst();
+      }catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
+    });
+
+    $("clearHistory").addEventListener("click", async ()=>{
+      if(!confirm("Clear the whole activity log?")) return;
+      try{ await post({ action:"clearHistory" }); ding(300,120); }
+      catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
+    });
+
+    // Poll every 15s (player only) for "NEW CAT!" toast
+    setInterval(async ()=>{
+      try{
+        if (isAdmin) return;
+        const data = await get();
+        if (typeof lastTotal === "number" && data.total > lastTotal) {
+          showToast("✨ Emyl added a new cat!");
+          burst();
+        }
+        lastTotal = data.total;
+        Object.assign(state, data); render();
+      }catch{}
+    }, 15000);
+
+    // boot
+    (async ()=>{
+      try{
+        uiStatus(true,"Connecting to database…");
+        const data = await get();
+        lastTotal = data.total;
+        Object.assign(state, data);
+        uiStatus(true,"Connected ✓");
+        render();
+      }catch(e){ uiStatus(false, "GET error: "+(e?.message||e)); }
+    })();
   })();
-})();
-</script>
+  </script>
 </body>
 </html>
