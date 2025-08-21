@@ -12,7 +12,7 @@ const cors = {
   "content-type": "application/json",
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET,POST,OPTIONS",
-  "access-control-allow-headers": "content-type",
+  "access-control-allow-headers": "content-type, x-admin-code",
 };
 
 const ok = (body) => ({ statusCode: 200, headers: cors, body: JSON.stringify(body) });
@@ -26,10 +26,13 @@ export async function handler(event) {
   if (!CONN) return err(500, "Missing DATABASE_URL / NETLIFY_DATABASE_URL");
 
   try {
-    const isAdmin = (() => {
-      const p = event.queryStringParameters || {};
-      return ADMIN_CODE ? p.admin === ADMIN_CODE : false;
-    })();
+    const headers = event.headers || {};
+    // Netlify lowercases header keys
+    const headerCode = headers["x-admin-code"] || headers["X-Admin-Code"];
+    const qs = event.queryStringParameters || {};
+    const adminCandidate = qs.admin || headerCode || "";
+
+    const isAdmin = ADMIN_CODE ? adminCandidate === ADMIN_CODE : false;
 
     const sql = neon(CONN);
 
@@ -103,7 +106,7 @@ export async function handler(event) {
       if (i >= 0) return i;
       i = cats.findIndex(c => !c.found && eq(c.color,color)); if (i >= 0) return i;
       i = cats.findIndex(c => !c.found && eq(c.location,location)); if (i >= 0) return i;
-      return -1; // ← no more “ad-hoc” guesses; must be an existing hidden cat
+      return -1;
     };
 
     if (event.httpMethod === "GET") {
@@ -120,7 +123,7 @@ export async function handler(event) {
       const s = await getState();
       normalizeCounts(s);
 
-      // Admin-only actions
+      // Admin-only
       if (["addHidden","deleteCat","clearHistory","renameGame"].includes(action) && !isAdmin) {
         return err(403, "Admin required");
       }
@@ -138,10 +141,7 @@ export async function handler(event) {
         if (!name) name = `🫥 Hidden`;
         const cat = { id: Date.now(), name, color, location, found: false, created_at: nowISO() };
         s.hidden_cats = [...(s.hidden_cats||[]), cat];
-        s.history = [
-          { type:"total+", delta:1, where:location, color, name: cat.name, when: nowISO() },
-          ...(s.history||[])
-        ].slice(0, 200);
+        s.history = [{ type:"total+", delta:1, where:location, color, name: cat.name, when: nowISO() }, ...(s.history||[])].slice(0,200);
         const ns = await saveState(s);
         return ok(maskForPlayer(ns));
       }
@@ -164,16 +164,12 @@ export async function handler(event) {
 
       if (action === "found") {
         const { color, location } = body;
-        const cats = s.hidden_cats || [];
-        const idx = pickCandidateIndex(cats, color, location);
+        const idx = pickCandidateIndex(s.hidden_cats || [], color, location);
         if (idx === -1) return err(409, "No matching hidden cats. Ask Emyl to add some! 🐱");
 
-        const chosen = cats[idx];
+        const chosen = s.hidden_cats[idx];
         s.hidden_cats[idx] = { ...chosen, found: true, found_at: nowISO() };
-        s.history = [
-          { type:"found+", delta:1, where: chosen.location, color: chosen.color, name: chosen.name, when: nowISO() },
-          ...(s.history||[])
-        ].slice(0,200);
+        s.history = [{ type:"found+", delta:1, where: chosen.location, color: chosen.color, name: chosen.name, when: nowISO() }, ...(s.history||[])].slice(0,200);
 
         const ns = await saveState(s);
         return ok(maskForPlayer(ns));
