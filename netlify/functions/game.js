@@ -91,13 +91,28 @@ export async function handler(event) {
 
     const deepCopy = (o)=>JSON.parse(JSON.stringify(o));
 
+    // --- MASK FOR NON-ADMINS: hide name + color + location until found ---
     const maskForPlayer = (state) => {
       const HIDDEN = "🫥 Hidden";
+      if (isAdmin) return state; // admins see everything
+
       const s = deepCopy(state);
-      if (!isAdmin) {
-        s.hidden_cats = (s.hidden_cats || []).map(c => c.found ? c : { ...c, name: HIDDEN });
-        s.history = (s.history || []).map(h => (h.type === "found+") ? h : { ...h, name: HIDDEN });
-      }
+
+      // Hide all details of not-yet-found cats
+      s.hidden_cats = (s.hidden_cats || []).map(c => {
+        if (c.found) return c; // reveal when found
+        return { ...c, name: HIDDEN, color: "—", location: "—" };
+      });
+
+      // In history, only "found+" reveals details. Mask others.
+      s.history = (s.history || []).map(h => {
+        if (h.type === "found+") return h;
+        const masked = { ...h, name: HIDDEN };
+        if ("color" in masked) masked.color = "—";
+        if ("where" in masked) masked.where = "—";
+        return masked;
+      });
+
       return s;
     };
 
