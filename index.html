@@ -1,247 +1,359 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🐱 Lil Cat Hunt 🐱</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Comic Sans MS', cursive, sans-serif;
-      background: linear-gradient(-45deg, #ff9aeb, #a77bff, #ffb3d1, #b380ff);
-      background-size: 400% 400%;
-      animation: gradient 20s ease infinite;
-      color: white;
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Lil Cat Hunt 🐾</title>
 
-    @keyframes gradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 
-    header {
-      text-align: center;
-      padding: 1em;
-      font-size: 2em;
-      font-weight: bold;
-      text-shadow: 2px 2px 6px rgba(0,0,0,.5);
-    }
+<style>
+  :root{
+    --bg1:#0a0514; --bg2:#140826; --bg3:#1a0f2e;
+    --neon1:#ff3fa5; --neon2:#bf5af2; --neon3:#7a5cff;
+    --text:#f8f7fb; --muted:#b7a9cc; --accent:#ff3fa5;
+    --ok:#0e2a19; --okb:#22c55e; --oktxt:#d1fae5;
+    --err:#2a0e18; --errb:#fb7185; --errtxt:#ffe4e6;
+    --card-bg: rgba(20, 10, 32, .58);
+    --card-brd: rgba(255, 255, 255, .10);
+    --ring: rgba(255,63,165,.25);
+    --footerH: 64px; /* player height */
+  }
+  html,body{height:100%;margin:0}
+  body{
+    color:var(--text);
+    font-family:"Baloo 2","Nunito",ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(60vmax 60vmax at 10% 20%, rgba(255,63,165,.25) 0%, transparent 60%),
+      radial-gradient(60vmax 60vmax at 80% 15%, rgba(191,90,242,.25) 0%, transparent 60%),
+      radial-gradient(60vmax 60vmax at 50% 100%, rgba(122,92,255,.25) 0%, transparent 60%),
+      conic-gradient(from 0deg at 50% 50%, var(--bg1), var(--bg2), var(--bg3), var(--bg1));
+    background-size: 140% 140%, 140% 140%, 140% 140%, 300% 300%;
+    animation: swirl1 28s linear infinite, swirl2 32s linear infinite reverse, swirl3 40s linear infinite, hue 36s linear infinite;
+    overflow-x:hidden;
+  }
+  @keyframes swirl1 { 0%{background-position:0 0} 100%{background-position:100% 50%} }
+  @keyframes swirl2 { 0%{background-position:0 0} 100%{background-position:50% 100%} }
+  @keyframes swirl3 { 0%{background-position:0 0} 100%{background-position:0 100%} }
+  @keyframes hue { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
 
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: rgba(255,255,255,0.1);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-      backdrop-filter: blur(12px);
-      position: relative;
-      z-index: 1;
-    }
+  /* FULL-PAGE EMOJI FIELD (no cutoff on iOS) */
+  .emoji-field{
+    position:fixed; inset:0; width:100vw; height:120lvh; /* taller than viewport */
+    overflow:hidden; pointer-events:none; z-index:0;
+  }
+  .drift{ position:absolute; font-size:24px; opacity:.9; animation: drift var(--dur) linear forwards; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
+  @keyframes drift {
+    0%{ transform: translate(var(--x,0), 110lvh) rotate(0deg) scale(.9); opacity:.0}
+    8%{ opacity:.9 }
+    100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -20lvh) rotate(540deg) scale(1.25); opacity:0 }
+  }
+  .burst{ position:absolute; font-size:22px; animation: pop .6s ease-out forwards; }
+  @keyframes pop {
+    0%{ transform: translate(-50%,-50%) scale(.5) rotate(0); opacity:0 }
+    20%{ opacity:1 }
+    100%{ transform: translate(var(--tx),var(--ty)) scale(1.4) rotate(360deg); opacity:0 }
+  }
 
-    button {
-      background: linear-gradient(45deg, #ff61d2, #fe9090);
-      border: none;
-      border-radius: 12px;
-      padding: 10px 20px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      margin: 5px;
-      transition: transform .2s;
-    }
-    button:hover { transform: scale(1.05); }
+  .wrap{ max-width:1000px; margin:0 auto; padding:28px; padding-bottom:calc(var(--footerH) + env(safe-area-inset-bottom,0px) + 24px); position:relative; z-index:1 }
 
-    #activityLog {
-      margin-top: 15px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
+  h1{
+    margin:0 0 14px 0;
+    font-size: clamp(28px, 5vw, 46px);
+    line-height:1.05; letter-spacing:.3px;
+    background: linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3),var(--neon1));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow: 0 6px 24px rgba(191,90,242,.35);
+  }
 
-    .cat-entry {
-      background: rgba(255,255,255,0.2);
-      padding: 8px;
-      border-radius: 8px;
-      margin: 5px 0;
-    }
+  .card{
+    background: var(--card-bg);
+    border: 1px solid var(--card-brd);
+    border-radius: 18px;
+    box-shadow: 0 8px 28px rgba(191,90,242,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+    padding:16px; margin-bottom:16px;
+    backdrop-filter: blur(12px) saturate(140%);
+    overflow: visible; /* prevent inner emoji clipping */
+  }
 
-    /* Emoji floating background - fixed no cutoff */
-    .emoji-field {
-      position: fixed;
-      inset: -25vh -10vw -25vh -10vw; /* extend outside viewport */
-      width: auto;
-      height: auto;
-      overflow: visible; /* prevent clipping */
-      pointer-events: none;
-      z-index: 0;
-      transform: translateZ(0);
-      will-change: transform;
-    }
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .title{font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;gap:10px;align-items:center}
+  .muted{color:var(--muted);font-size:12px}
+  .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12)}
+  .chip{background:rgba(122,92,255,.25); padding:2px 8px; border:1px solid rgba(122,92,255,.45); border-radius:999px; font-size:12px; color:#e9ddff}
 
-    .drift {
-      position: absolute;
-      font-size: 24px;
-      opacity: .9;
-      animation: drift var(--dur) linear forwards;
-      filter: drop-shadow(0 3px 6px rgba(0,0,0,.35));
-    }
+  .btn{
+    appearance:none;border:0;border-radius:14px;padding:10px 14px;
+    font-weight:800;cursor:pointer;background:rgba(255,255,255,.06);
+    color:var(--text);
+    transition:transform .06s ease, box-shadow .15s ease, background .15s ease;
+    border:1px solid rgba(255,255,255,.08)
+  }
+  .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 20px var(--ring); background:rgba(255,255,255,.10) }
+  .btn:active{ transform:translateY(0) }
+  .btn.primary{ background:linear-gradient(180deg,var(--neon1),#ff1e90); color:white; border-color:transparent }
+  .btn.ghost{ background:rgba(255,255,255,.08) }
+  .btn.danger{ background:linear-gradient(180deg,#ff4d6d,#ef4444); color:white; border-color:transparent }
 
-    @keyframes drift {
-      0% {
-        transform: translate(var(--x, 0), 120vh) rotate(0deg) scale(.9);
-        opacity: 0;
-      }
-      8% { opacity: .95; }
-      100% {
-        transform: translate(calc(var(--x, 0) + var(--dx, 0)), -25vh)
-                   rotate(540deg) scale(1.25);
-        opacity: 0;
-      }
-    }
+  select,input[type=text]{
+    color:var(--text);
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.05);
+    border-radius:14px; padding:10px 12px; outline:none; font:inherit;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+  }
 
-    /* Music controls */
-    .music-controls {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 15px 0;
-    }
-    .music-controls button,
-    .music-controls input {
-      margin: 5px;
-    }
-  </style>
+  .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+  .bar{height:100%;background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));width:0%; box-shadow: inset 0 0 14px rgba(255,255,255,.25)}
+
+  .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .li{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .catrow{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
+
+  .ok{background:var(--ok);border:1px solid var(--okb);color:var(--oktxt);padding:10px 12px;border-radius:12px;margin-bottom:12px}
+  .err{background:var(--err);border:1px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
+
+  .section{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:980px){.section{grid-template-columns:1fr}}
+
+  .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#0b0b14;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,0.45);z-index:20;opacity:0;transition:.22s;border:1px solid rgba(255,255,255,.10)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* FIXED AUDIO FOOTER (safe-area aware) + spacer to avoid overlap */
+  .audio-footer{
+    position: fixed;
+    left: 12px; right: 12px;
+    bottom: calc(env(safe-area-inset-bottom,0px) + 10px);
+    height: var(--footerH);
+    display:flex; align-items:center; gap:10px; justify-content:flex-end;
+    padding:10px 12px;
+    background: rgba(20,10,32,.72);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    backdrop-filter: blur(12px) saturate(140%);
+    z-index: 5;
+  }
+  .audio-footer input[type=range]{ width:160px }
+  .footer-spacer{ height: calc(var(--footerH) + env(safe-area-inset-bottom,0px) + 28px); }
+</style>
 </head>
 <body>
-  <header>🐱 Lil Cat Hunt 🐱</header>
-  <div class="container">
-    <div id="status"></div>
-    <div>
-      <button onclick="guessCat()">Guess Cat</button>
-      <button onclick="clearActivity()" id="clearBtn" style="display:none;">Clear Activity</button>
-      <button onclick="deleteCats()" id="deleteBtn" style="display:none;">Delete All Cats</button>
-      <button onclick="addCat()" id="addBtn" style="display:none;">Add Cat</button>
-    </div>
-    <div id="activityLog"></div>
-
-    <div class="music-controls">
-      <button onclick="toggleTrack()">🎵 Track: <span id="trackName">1</span></button>
-      <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" oninput="setVolume(this.value)">
-    </div>
-  </div>
-
-  <!-- Emoji layer -->
   <div class="emoji-field" id="field"></div>
 
-  <script>
-    const ADMIN_CODE = "emyl-loves-cats";
-    const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get("admin") === ADMIN_CODE;
+  <div class="wrap">
+    <h1>🐾 Lil Cat Hunt</h1>
+    <div id="status"></div>
 
-    // DOM elements
-    const status = document.getElementById("status");
-    const activityLog = document.getElementById("activityLog");
-    if(isAdmin){
-      document.getElementById("clearBtn").style.display="inline-block";
-      document.getElementById("deleteBtn").style.display="inline-block";
-      document.getElementById("addBtn").style.display="inline-block";
-    }
+    <div class="card">
+      <div class="title">
+        <span id="gameName">Lil Cat Hunt</span>
+        <span class="pill" id="score">0 / 0</span>
+        <span id="adminBadge" class="chip" style="display:none">Admin</span>
+      </div>
+      <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
+      <div class="progress" style="margin-top:10px"><div class="bar" id="bar"></div></div>
+    </div>
 
-    // Activity log
-    function logActivity(text){
-      const entry = document.createElement("div");
-      entry.className="cat-entry";
-      entry.textContent=text;
-      activityLog.prepend(entry);
+    <div class="section">
+      <div class="card">
+        <div class="title">Found a Cat</div>
+        <div class="row">
+          <select id="fColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
+          <select id="fLoc">
+            <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
+            <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
+            <option>Storage Room 2</option><option>Hallway</option>
+          </select>
+          <button class="btn primary" id="foundBtn">Count it 🐾</button>
+        </div>
+        <div class="muted" id="foundResult" style="margin-top:6px"></div>
+      </div>
 
-      // keep max 4 visible
-      const entries = activityLog.querySelectorAll(".cat-entry");
-      if(entries.length > 4){
-        entries[entries.length-1].remove();
-      }
-    }
+      <div class="card" id="adminAdd" style="display:none">
+        <div class="title">Add Cat <span class="chip">Admin</span></div>
+        <div class="row">
+          <select id="aColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
+          <select id="aLoc">
+            <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
+            <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
+            <option>Storage Room 2</option><option>Hallway</option>
+          </select>
+          <input id="aName" type="text" placeholder="Name (Emyl sees this)"/>
+          <button class="btn ghost" id="addBtn">Add</button>
+        </div>
+        <div class="muted">Total goes up when you add cats.</div>
+      </div>
+    </div>
 
-    function guessCat(){
-      logActivity("You guessed a cat! 🐾");
-      beep();
-    }
-    function clearActivity(){
-      activityLog.innerHTML="";
-      logActivity("Activity cleared ✨");
-    }
-    function deleteCats(){
-      logActivity("All cats deleted 💥");
-    }
-    function addCat(){
-      logActivity("Emyl added a mysterious cat 🐱‍👤");
-      popup("EMYL HAS ADDED A NEW CAT!");
-    }
+    <div class="card">
+      <div class="title">Activity <span id="moreToggle" class="pill" style="cursor:pointer; margin-left:auto">Show more</span></div>
+      <ul class="list" id="activity"></ul>
+      <div id="adminActions" class="row" style="display:none; margin-top:6px">
+        <button class="btn danger" id="clearHistory">Clear activity</button>
+      </div>
+    </div>
 
-    // Popup
-    function popup(msg){
-      const p=document.createElement("div");
-      p.textContent=msg;
-      p.style.position="fixed";
-      p.style.top="10px";
-      p.style.left="50%";
-      p.style.transform="translateX(-50%)";
-      p.style.background="rgba(0,0,0,0.7)";
-      p.style.padding="10px 20px";
-      p.style.borderRadius="10px";
-      p.style.color="white";
-      p.style.fontWeight="bold";
-      p.style.zIndex="9999";
-      document.body.appendChild(p);
-      setTimeout(()=>p.remove(),2000);
-    }
+    <div class="card">
+      <div class="title">Cat List</div>
+      <ul class="list" id="cats"></ul>
+    </div>
 
-    // Emoji floaters
-    const field = document.getElementById("field");
-    const emojis = ["🐱","😺","😸","😹","😻","😼"];
-    function spawnFloater(){
-      const el=document.createElement("div");
-      el.className="drift";
-      el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
-      el.style.setProperty("--x",Math.random()*100+"vw");
-      el.style.setProperty("--dx",(Math.random()*100-50)+"px");
-      el.style.setProperty("--dur",(10+Math.random()*10)+"s");
-      field.appendChild(el);
-      setTimeout(()=>el.remove(),20000);
-    }
-    setInterval(spawnFloater,1000);
+    <!-- Spacer so the fixed footer never overlaps content -->
+    <div class="footer-spacer"></div>
+  </div>
 
-    // Sounds
-    let tracks=[
-      new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"),
-      new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"),
-      new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"),
-      new Audio("https://actions.google.com/sounds/v1/cartoon/slide_whistle_to_drum.ogg")
-    ];
-    tracks.forEach(t=>t.loop=true);
-    let currentTrack=0;
-    function toggleTrack(){
-      tracks.forEach(t=>{t.pause(); t.currentTime=0;});
-      currentTrack=(currentTrack+1)%tracks.length;
-      tracks[currentTrack].play();
-      document.getElementById("trackName").textContent=currentTrack+1;
-    }
-    function setVolume(v){
-      tracks.forEach(t=>t.volume=v);
-    }
-    function beep(){
-      const fx=new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg");
-      fx.play();
-    }
+  <!-- Fixed audio footer -->
+  <div class="audio-footer">
+    <button id="musicToggle" class="btn ghost">▶️ Track 1</button>
+    <span class="muted">Vol</span>
+    <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
+  </div>
 
-    // Start first track muted until user clicks
-    document.body.addEventListener("click",()=>{
-      if(tracks[currentTrack].paused){
-        tracks[currentTrack].play();
-      }
-    },{once:true});
-  </script>
-</body>
-</html>
+  <div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  const FN = "/.netlify/functions/game";
+  const $ = (id)=>document.getElementById(id);
+
+  const status = $("status"), toast=$("toast");
+  const gameNameEl=$("gameName"), score=$("score"), bar=$("bar");
+  const foundResult=$("foundResult"), activity=$("activity"), cats=$("cats");
+  const adminAdd=$("adminAdd"), adminActions=$("adminActions"), adminBadge=$("adminBadge"), moreToggle=$("moreToggle");
+
+  const showToast=(m)=>{ toast.textContent=m; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"),1800); };
+  const escapeHTML=(s)=>String(s??"").replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  const uiStatus=(ok,msg)=>{ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; };
+
+  // ADMIN via querystring
+  const p = new URLSearchParams(location.search);
+  const adminCode = p.get("admin") || "";
+  const isAdmin = !!adminCode;
+  if (isAdmin) adminBadge.style.display="inline-block";
+
+  // AUDIO (fixed footer)
+  let AC, master, musicGain, sfxGain, playing=false, track=0, seqTimer=null, step=0;
+  const musicBtn=$("musicToggle"), vol=$("vol");
+
+  function ensureAC(){
+    if(!AC){
+      AC = new (window.AudioContext||window.webkitAudioContext)();
+      master = AC.createGain(); master.gain.value=0.9; master.connect(AC.destination);
+      musicGain = AC.createGain(); musicGain.gain.value=Number(vol.value); musicGain.connect(master);
+      sfxGain = AC.createGain(); sfxGain.gain.value=Math.min(1, Number(vol.value)*1.1+0.2); sfxGain.connect(master);
+    }
+    if (AC.state === "suspended") AC.resume();
+  }
+  ["pointerdown","click","touchstart"].forEach(evt=>{
+    window.addEventListener(evt, ()=>{ ensureAC(); }, { once:true, passive:true });
+  });
+
+  function tone(freq=880,dur=.12,type="square",gainNode=sfxGain){
+    ensureAC();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq, AC.currentTime);
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3, AC.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
+    o.connect(g); g.connect(gainNode); o.start(); o.stop(AC.currentTime+dur+0.02);
+  }
+  function noise(dur=.06,gain=.15){
+    ensureAC();
+    const n = AC.createBuffer(1, AC.sampleRate*dur, AC.sampleRate);
+    const d = n.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    const src=AC.createBufferSource(); src.buffer=n;
+    const g=AC.createGain(); g.gain.value=gain;
+    const hp=AC.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=5000;
+    src.connect(hp); hp.connect(g); g.connect(sfxGain); src.start(); src.stop(AC.currentTime+dur);
+  }
+
+  const tracks=[
+    { tempo:124, lead:[0,4,7,12,0,4,7,12,2,5,9,14,2,5,9,14], bass:[-24,-24,-19,-24,-24,-24,-19,-24,-22,-22,-17,-22,-22,-22,-17,-22] },
+    { tempo:132, lead:[0,7,12,7,2,9,14,9,-1,5,9,5,-3,4,7,4], bass:[-24,-19,-24,-31,-22,-17,-22,-29,-23,-19,-23,-30,-24,-19,-24,-31] },
+    { tempo:110, lead:[0,2,4,7,7,9,11,14,5,7,9,12,12,14,16,19], bass:[-24,-24,-19,-24,-19,-19,-17,-19,-22,-22,-19,-22,-24,-24,-19,-24] },
+    { tempo:140, lead:[0,12,7,4,2,14,9,5,-1,11,7,2,-3,9,4,0], bass:[-24,-12,-19,-24,-22,-10,-17,-22,-23,-12,-19,-23,-24,-12,-19,-24] },
+  ];
+  const freq=(base,semi)=>440*Math.pow(2, semi/12);
+
+  function startMusic(){
+    ensureAC(); if(playing) return;
+    playing = true; musicBtn.textContent=`⏸️ Track ${track+1}`;
+    step=0; const len=16;
+    const tick=()=>{
+      if(!playing) return;
+      const { tempo, lead, bass } = tracks[track];
+      const spb = 60/tempo;
+      tone(freq(440, lead[step%len]-12), .20, "square", musicGain);
+      tone(freq(440, bass[step%len]), .22, "triangle", musicGain);
+      if (step%2===0) noise(.03,.08);
+      step=(step+1)%len;
+      seqTimer=setTimeout(tick, spb*1000);
+    };
+    tick();
+  }
+  function stopMusic(){ playing=false; if(seqTimer) clearTimeout(seqTimer), seqTimer=null; musicBtn.textContent=`▶️ Track ${track+1}`; }
+
+  musicBtn.addEventListener("click", ()=>{
+    ensureAC();
+    if (playing){ stopMusic(); track=(track+1)%tracks.length; startMusic(); showToast(`🎶 Track ${track+1}`); }
+    else { startMusic(); showToast(`🎶 Track ${track+1}`); }
+  });
+  vol.addEventListener("input", ()=>{ ensureAC(); musicGain.gain.value=Number(vol.value); sfxGain.gain.value=Math.min(1, Number(vol.value)*1.1+0.2); });
+
+  const sfx={ found(){ tone(880,.12,"square"); setTimeout(()=>tone(1320,.12,"square"),120); },
+              add(){ tone(760,.10,"square"); setTimeout(()=>tone(920,.10,"square"),100); },
+              delete(){ tone(220,.10,"sawtooth"); setTimeout(()=>tone(180,.12,"sawtooth"),100); },
+              clear(){ noise(.08,.25); tone(400,.08,"triangle"); } };
+
+  // Emoji floaters (faster)
+  const field=$("field"); const floaters=["🐱","🐾","😺","✨","🧶","💫","🪄"];
+  function spawnFloater(){
+    const e=document.createElement("div"); e.className="drift";
+    e.textContent=floaters[Math.floor(Math.random()*floaters.length)];
+    const x=Math.random()*innerWidth, dx=(Math.random()*2-1)*220, dur=8+Math.random()*8;
+    e.style.setProperty("--x", x+"px"); e.style.setProperty("--dx", dx+"px"); e.style.setProperty("--dur", dur+"s");
+    e.style.left="0"; e.style.top="0";
+    field.appendChild(e);
+    setTimeout(()=>e.remove(), dur*1000+200);
+  }
+  for(let i=0;i<24;i++) spawnFloater();
+  setInterval(spawnFloater, 450);
+
+  function burstAt(x,y,count=10){
+    const em=["🐾","✨","😺","💖","🧶","🌟"];
+    for(let i=0;i<count;i++){
+      const b=document.createElement("div"); b.className="burst"; b.textContent=em[Math.floor(Math.random()*em.length)];
+      b.style.left=x+"px"; b.style.top=y+"px";
+      const r=60+Math.random()*60, a=Math.random()*Math.PI*2;
+      b.style.setProperty("--tx",(Math.cos(a)*r)+"px"); b.style.setProperty("--ty",(Math.sin(a)*r)+"px");
+      document.body.appendChild(b); setTimeout(()=>b.remove(),600);
+    }
+  }
+
+  // Data / render
+  const state={ found:0,total:0,game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
+  let expanded=false, lastTotal=0;
+
+  function render(){
+    gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
+    score.textContent = `${state.found} / ${state.total}`;
+    bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
+
+    const logs=state.history||[];
+    const show = expanded ? logs : logs.slice(0,4);
+    activity.innerHTML = show.map(h=>{
+      const icon = h.type==='found+'?'✅':'➕';
+      const name = h.name || '🫥 Hidden';
+      const when = new Date(h.when).toLocaleString();
+      return `<li class="li"><div>${icon} <b>${escapeHTML(name)}</b> <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${when}</div></li>`;
+    }).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
+
+    moreToggle.textContent = expanded ? "Show less" : "Show more";
+    adminAdd.style.display = isAdmin ? "block" : "none";
+    adminActions.style.display = isAdmin ? "flex" : "none";
+    adminBadge.style.display = isAdmin ? "inline-block" : "none";
+
+    cats.innerHTML = (state.hidden_cats||[]).map(c=>{
+      const left = `${c.found?'✅':'❓'} <b>${escapeHTML(c.name||'🫥 Hidden')}</b> <span class
