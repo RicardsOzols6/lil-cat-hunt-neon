@@ -1,139 +1,148 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lil Cat Hunt 🐾</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Lil Cat Hunt 🐾</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root{
-      --bg1:#0a0514; --bg2:#140826; --bg3:#1a0f2e;
-      --neon1:#ff3fa5; --neon2:#bf5af2; --neon3:#7a5cff;
-      --text:#f8f7fb; --muted:#b7a9cc; --accent:#ff3fa5;
-      --ok:#0e2a19; --okb:#22c55e; --oktxt:#d1fae5;
-      --err:#2a0e18; --errb:#fb7185; --errtxt:#ffe4e6;
-      --card-bg: rgba(20, 10, 32, .58);
-      --card-brd: rgba(255, 255, 255, .10);
-      --ring: rgba(255,63,165,.25);
-    }
-    html,body{height:100%;margin:0}
-    body{
-      color:var(--text);
-      font-family:"Baloo 2","Nunito",ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background:
-        radial-gradient(60vmax 60vmax at 10% 20%, rgba(255,63,165,.25) 0%, transparent 60%),
-        radial-gradient(60vmax 60vmax at 80% 15%, rgba(191,90,242,.25) 0%, transparent 60%),
-        radial-gradient(60vmax 60vmax at 50% 100%, rgba(122,92,255,.25) 0%, transparent 60%),
-        conic-gradient(from 0deg at 50% 50%, var(--bg1), var(--bg2), var(--bg3), var(--bg1));
-      background-size: 140% 140%, 140% 140%, 140% 140%, 300% 300%;
-      animation: swirl1 28s linear infinite, swirl2 32s linear infinite reverse, swirl3 40s linear infinite, hue 36s linear infinite;
-      overflow-x:hidden;
-    }
-    @keyframes swirl1 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 50%, 50% 100%, 0% 100%, 100% 100%} }
-    @keyframes swirl2 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:50% 100%, 100% 50%, 100% 0%, 0% 0%} }
-    @keyframes swirl3 { 0%{background-position:0% 0%, 0% 0%, 0% 0%, 0% 0%} 100%{background-position:100% 0%, 50% 50%, 0% 50%, 100% 0%} }
-    @keyframes hue { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+<style>
+  :root{
+    --bg1:#0a0514; --bg2:#140826; --bg3:#1a0f2e;
+    --neon1:#ff3fa5; --neon2:#bf5af2; --neon3:#7a5cff;
+    --text:#f8f7fb; --muted:#b7a9cc; --accent:#ff3fa5;
+    --ok:#0e2a19; --okb:#22c55e; --oktxt:#d1fae5;
+    --err:#2a0e18; --errb:#fb7185; --errtxt:#ffe4e6;
+    --card-bg: rgba(20, 10, 32, .58);
+    --card-brd: rgba(255, 255, 255, .10);
+    --ring: rgba(255,63,165,.25);
+    --footerH: 64px; /* player height */
+  }
+  html,body{height:100%;margin:0}
+  body{
+    color:var(--text);
+    font-family:"Baloo 2","Nunito",ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(60vmax 60vmax at 10% 20%, rgba(255,63,165,.25) 0%, transparent 60%),
+      radial-gradient(60vmax 60vmax at 80% 15%, rgba(191,90,242,.25) 0%, transparent 60%),
+      radial-gradient(60vmax 60vmax at 50% 100%, rgba(122,92,255,.25) 0%, transparent 60%),
+      conic-gradient(from 0deg at 50% 50%, var(--bg1), var(--bg2), var(--bg3), var(--bg1));
+    background-size: 140% 140%, 140% 140%, 140% 140%, 300% 300%;
+    animation: swirl1 28s linear infinite, swirl2 32s linear infinite reverse, swirl3 40s linear infinite, hue 36s linear infinite;
+    overflow-x:hidden;
+  }
+  @keyframes swirl1 { 0%{background-position:0 0} 100%{background-position:100% 50%} }
+  @keyframes swirl2 { 0%{background-position:0 0} 100%{background-position:50% 100%} }
+  @keyframes swirl3 { 0%{background-position:0 0} 100%{background-position:0 100%} }
+  @keyframes hue { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
 
-    /* FULL-SCREEN EMOJI LAYER (fix mobile cutoff) */
-    .emoji-field{
-      position:fixed; left:0; top:0; width:100vw; height:100dvh;
-      overflow:hidden; pointer-events:none; z-index:0;
-    }
-    .drift{ position:absolute; font-size:24px; opacity:.9; animation: drift var(--dur) linear forwards; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
-    @keyframes drift {
-      0%{ transform: translate(var(--x,0), 110dvh) rotate(0deg) scale(.9); opacity:.0}
-      8%{ opacity:.9 }
-      100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10dvh) rotate(540deg) scale(1.25); opacity:0 }
-    }
-    .burst{ position:absolute; font-size:22px; animation: pop .6s ease-out forwards; }
-    @keyframes pop {
-      0%{ transform: translate(-50%,-50%) scale(.5) rotate(0deg); opacity:0 }
-      20%{ opacity:1 }
-      100%{ transform: translate(var(--tx),var(--ty)) scale(1.4) rotate(360deg); opacity:0 }
-    }
+  /* FULL-PAGE EMOJI FIELD (no cutoff on iOS) */
+  .emoji-field{
+    position:fixed;
+    inset:-25vh -10vw -25vh -10vw;  /* extend beyond edges */
+    width:auto;height:auto;
+    overflow:visible;
+    pointer-events:none; z-index:0;
+    transform:translateZ(0);
+    will-change:transform;
+  }
+  .drift{ position:absolute; font-size:24px; opacity:.9; animation: drift var(--dur) linear forwards; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)); }
+  @keyframes drift {
+    0%{ transform: translate(var(--x,0), 120vh) rotate(0deg) scale(.9); opacity:.0}
+    8%{ opacity:.95 }
+    100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -25vh) rotate(540deg) scale(1.25); opacity:0 }
+  }
+  .burst{ position:absolute; font-size:22px; animation: pop .6s ease-out forwards; }
+  @keyframes pop {
+    0%{ transform: translate(-50%,-50%) scale(.5) rotate(0); opacity:0 }
+    20%{ opacity:1 }
+    100%{ transform: translate(var(--tx),var(--ty)) scale(1.4) rotate(360deg); opacity:0 }
+  }
 
-    .wrap{ max-width:1000px; margin:0 auto; padding:28px; padding-bottom:28px; position:relative; z-index:1 }
+  .wrap{ max-width:1000px; margin:0 auto; padding:28px; padding-bottom:calc(var(--footerH) + env(safe-area-inset-bottom,0px) + 24px); position:relative; z-index:1 }
 
-    h1{
-      margin:0 0 14px 0;
-      font-size: clamp(28px, 5vw, 46px);
-      line-height:1.05; letter-spacing:.3px;
-      background: linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3),var(--neon1));
-      -webkit-background-clip:text; background-clip:text; color:transparent;
-      text-shadow: 0 6px 24px rgba(191,90,242,.35);
-    }
+  h1{
+    margin:0 0 14px 0;
+    font-size: clamp(28px, 5vw, 46px);
+    line-height:1.05; letter-spacing:.3px;
+    background: linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3),var(--neon1));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow: 0 6px 24px rgba(191,90,242,.35);
+  }
 
-    .card{
-      background: var(--card-bg);
-      border: 1px solid var(--card-brd);
-      border-radius: 18px;
-      box-shadow: 0 8px 28px rgba(191,90,242,.25), inset 0 0 0 1px rgba(255,255,255,.06);
-      padding:16px; margin-bottom:16px;
-      backdrop-filter: blur(12px) saturate(140%);
-    }
+  .card{
+    background: var(--card-bg);
+    border: 1px solid var(--card-brd);
+    border-radius: 18px;
+    box-shadow: 0 8px 28px rgba(191,90,242,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+    padding:16px; margin-bottom:16px;
+    backdrop-filter: blur(12px) saturate(140%);
+    overflow: visible; /* prevent inner emoji clipping */
+  }
 
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .title{font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;gap:10px;align-items:center}
-    .muted{color:var(--muted);font-size:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .title{font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;gap:10px;align-items:center}
+  .muted{color:var(--muted);font-size:12px}
+  .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12)}
+  .chip{background:rgba(122,92,255,.25); padding:2px 8px; border:1px solid rgba(122,92,255,.45); border-radius:999px; font-size:12px; color:#e9ddff}
 
-    .btn{
-      appearance:none;border:0;border-radius:14px;padding:10px 14px;
-      font-weight:800;cursor:pointer;background:rgba(255,255,255,.06);
-      color:var(--text);
-      transition:transform .06s ease, box-shadow .15s ease, background .15s ease;
-      border:1px solid rgba(255,255,255,.08)
-    }
-    .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 20px var(--ring); background:rgba(255,255,255,.10) }
-    .btn:active{ transform:translateY(0) }
-    .btn.primary{ background:linear-gradient(180deg,var(--neon1),#ff1e90); color:white; border-color:transparent }
-    .btn.ghost{ background:rgba(255,255,255,.08) }
-    .btn.danger{ background:linear-gradient(180deg,#ff4d6d,#ef4444); color:white; border-color:transparent }
+  .btn{
+    appearance:none;border:0;border-radius:14px;padding:10px 14px;
+    font-weight:800;cursor:pointer;background:rgba(255,255,255,.06);
+    color:var(--text);
+    transition:transform .06s ease, box-shadow .15s ease, background .15s ease;
+    border:1px solid rgba(255,255,255,.08)
+  }
+  .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 20px var(--ring); background:rgba(255,255,255,.10) }
+  .btn:active{ transform:translateY(0) }
+  .btn.primary{ background:linear-gradient(180deg,var(--neon1),#ff1e90); color:white; border-color:transparent }
+  .btn.ghost{ background:rgba(255,255,255,.08) }
+  .btn.danger{ background:linear-gradient(180deg,#ff4d6d,#ef4444); color:white; border-color:transparent }
 
-    select,input[type=text]{
-      color:var(--text);
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.05);
-      border-radius:14px; padding:10px 12px; outline:none; font:inherit;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
-    }
+  select,input[type=text]{
+    color:var(--text);
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.05);
+    border-radius:14px; padding:10px 12px; outline:none; font:inherit;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+  }
 
-    .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12)}
-    .chip{background:rgba(122,92,255,.25); padding:2px 8px; border:1px solid rgba(122,92,255,.45); border-radius:999px; font-size:12px; color:#e9ddff}
+  .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+  .bar{height:100%;background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));width:0%; box-shadow: inset 0 0 14px rgba(255,255,255,.25)}
 
-    .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
-    .bar{height:100%;background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));width:0%; box-shadow: inset 0 0 14px rgba(255,255,255,.25)}
+  .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .li{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+  .catrow{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
 
-    .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-    .li{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-    .catrow{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:8px;align-items:center}
+  .ok{background:var(--ok);border:1px solid var(--okb);color:var(--oktxt);padding:10px 12px;border-radius:12px;margin-bottom:12px}
+  .err{background:var(--err);border:1px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
 
-    .ok{background:var(--ok);border:1px solid var(--okb);color:var(--oktxt);padding:10px 12px;border-radius:12px;margin-bottom:12px}
-    .err{background:var(--err);border:1px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
+  .section{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:980px){.section{grid-template-columns:1fr}}
 
-    .section{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    @media (max-width:980px){.section{grid-template-columns:1fr}}
+  .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#0b0b14;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,0.45);z-index:20;opacity:0;transition:.22s;border:1px solid rgba(255,255,255,.10)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-10px);background:#0b0b14;color:#fff;padding:12px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,0.45);z-index:20;opacity:0;transition:.22s;border:1px solid rgba(255,255,255,.10)}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-    /* NEW: audio footer card (sticky, safe-area-aware) */
-    .audio-footer{
-      position: sticky;
-      bottom: calc(env(safe-area-inset-bottom,0px) + 12px);
-      z-index: 3;
-      display:flex; align-items:center; gap:10px; justify-content:flex-end;
-      padding:10px 12px;
-    }
-    .audio-footer .muted{ font-size:12px }
-    .audio-footer input[type=range]{ width:160px }
-    @media (min-width:981px){
-      .audio-footer{ justify-content:flex-end }
-    }
-  </style>
+  /* FIXED AUDIO FOOTER (safe-area aware) + spacer to avoid overlap */
+  .audio-footer{
+    position: fixed;
+    left: 12px; right: 12px;
+    bottom: calc(env(safe-area-inset-bottom,0px) + 10px);
+    height: var(--footerH);
+    display:flex; align-items:center; gap:10px; justify-content:flex-end;
+    padding:10px 12px;
+    background: rgba(20,10,32,.72);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    backdrop-filter: blur(12px) saturate(140%);
+    z-index: 5;
+  }
+  .audio-footer input[type=range]{ width:160px }
+  .footer-spacer{ height: calc(var(--footerH) + env(safe-area-inset-bottom,0px) + 28px); }
+</style>
 </head>
 <body>
   <div class="emoji-field" id="field"></div>
@@ -149,7 +158,7 @@
         <span id="adminBadge" class="chip" style="display:none">Admin</span>
       </div>
       <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
-      <div class="progress" style="margin-top:10px"><div class="bar" id="bar" style="width:0%"></div></div>
+      <div class="progress" style="margin-top:10px"><div class="bar" id="bar"></div></div>
     </div>
 
     <div class="section">
@@ -176,7 +185,7 @@
             <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
             <option>Storage Room 2</option><option>Hallway</option>
           </select>
-          <input id="aName" type="text" placeholder="Name (Emyl sees this)" />
+          <input id="aName" type="text" placeholder="Name (Emyl sees this)"/>
           <button class="btn ghost" id="addBtn">Add</button>
         </div>
         <div class="muted">Total goes up when you add cats.</div>
@@ -196,279 +205,255 @@
       <ul class="list" id="cats"></ul>
     </div>
 
-    <!-- Sticky audio footer card (in-flow, no overlap) -->
-    <div class="card audio-footer">
-      <button id="musicToggle" class="btn ghost">▶️ Track 1</button>
-      <span class="muted">Vol</span>
-      <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
-    </div>
+    <!-- Spacer so the fixed footer never overlaps content -->
+    <div class="footer-spacer"></div>
+  </div>
+
+  <!-- Fixed audio footer -->
+  <div class="audio-footer">
+    <button id="musicToggle" class="btn ghost">▶️ Track 1</button>
+    <span class="muted">Vol</span>
+    <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
   </div>
 
   <div id="toast" class="toast"></div>
 
-  <script>
-  (function(){
-    const FN = "/.netlify/functions/game";
-    const $ = (id)=>document.getElementById(id);
+<script>
+(function(){
+  const FN = "/.netlify/functions/game";
+  const $ = (id)=>document.getElementById(id);
 
-    const status = $("status");
-    const toast = $("toast");
-    const gameNameEl = $("gameName"), score = $("score"), bar = $("bar");
-    const foundResult = $("foundResult"), activity = $("activity"), cats = $("cats");
-    const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
-    const adminBadge = $("adminBadge");
+  const status = $("status"), toast=$("toast");
+  const gameNameEl=$("gameName"), score=$("score"), bar=$("bar");
+  const foundResult=$("foundResult"), activity=$("activity"), cats=$("cats");
+  const adminAdd=$("adminAdd"), adminActions=$("adminActions"), adminBadge=$("adminBadge"), moreToggle=$("moreToggle");
 
-    const showToast = (msg)=>{ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1800); };
-    const escapeHTML=(s)=>String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-    const uiStatus=(ok,msg)=>{ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; };
+  const showToast=(m)=>{ toast.textContent=m; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"),1800); };
+  const escapeHTML=(s)=>String(s??"").replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  const uiStatus=(ok,msg)=>{ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; };
 
-    /* ADMIN only when ?admin= is present */
-    const urlParams = new URLSearchParams(location.search);
-    const adminCode = urlParams.get("admin") || "";
-    const isAdmin = !!adminCode;
-    if (isAdmin) adminBadge.style.display = "inline-block";
+  // ADMIN via querystring
+  const p = new URLSearchParams(location.search);
+  const adminCode = p.get("admin") || "";
+  const isAdmin = !!adminCode;
+  if (isAdmin) adminBadge.style.display="inline-block";
 
-    /* AUDIO — in-flow footer */
-    let AC, master, musicGain, sfxGain, playing=false, track=0, seqTimer=null, step=0;
-    const musicBtn = $("musicToggle"); const vol = $("vol");
+  // AUDIO (fixed footer)
+  let AC, master, musicGain, sfxGain, playing=false, track=0, seqTimer=null, step=0;
+  const musicBtn=$("musicToggle"), vol=$("vol");
 
-    function ensureAC(){
-      if (!AC) {
-        AC = new (window.AudioContext||window.webkitAudioContext)();
-        master = AC.createGain(); master.gain.value = 0.9; master.connect(AC.destination);
-        musicGain = AC.createGain(); musicGain.gain.value = Number(vol.value); musicGain.connect(master);
-        sfxGain = AC.createGain(); sfxGain.gain.value = Math.min(1, Number(vol.value)*1.1 + 0.2); sfxGain.connect(master);
-      }
-      if (AC.state === "suspended") AC.resume();
+  function ensureAC(){
+    if(!AC){
+      AC = new (window.AudioContext||window.webkitAudioContext)();
+      master = AC.createGain(); master.gain.value=0.9; master.connect(AC.destination);
+      musicGain = AC.createGain(); musicGain.gain.value=Number(vol.value); musicGain.connect(master);
+      sfxGain = AC.createGain(); sfxGain.gain.value=Math.min(1, Number(vol.value)*1.1+0.2); sfxGain.connect(master);
     }
-    ["pointerdown","click","touchstart"].forEach(evt=>{
-      window.addEventListener(evt, ()=>{ ensureAC(); }, { once:true, passive:true });
-    });
+    if (AC.state === "suspended") AC.resume();
+  }
+  ["pointerdown","click","touchstart"].forEach(evt=>{
+    window.addEventListener(evt, ()=>{ ensureAC(); }, { once:true, passive:true });
+  });
 
-    function tone(freq=880, dur=0.12, type="square", gainNode=sfxGain){
-      ensureAC();
-      const o = AC.createOscillator(), g = AC.createGain();
-      o.type = type; o.frequency.setValueAtTime(freq, AC.currentTime);
-      g.gain.setValueAtTime(0.0001, AC.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.3, AC.currentTime+0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
-      o.connect(g); g.connect(gainNode);
-      o.start(); o.stop(AC.currentTime+dur+0.02);
-    }
-    function noise(dur=0.06, gain=0.15){
-      ensureAC();
-      const bufferSize = AC.sampleRate * dur;
-      const buffer = AC.createBuffer(1, bufferSize, AC.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i=0;i<bufferSize;i++) data[i] = Math.random()*2-1;
-      const src = AC.createBufferSource(); src.buffer = buffer;
-      const g = AC.createGain(); g.gain.value = gain;
-      const bp = AC.createBiquadFilter(); bp.type="highpass"; bp.frequency.value = 5000;
-      src.connect(bp); bp.connect(g); g.connect(sfxGain);
-      src.start(); src.stop(AC.currentTime+dur);
-    }
+  function tone(freq=880,dur=.12,type="square",gainNode=sfxGain){
+    ensureAC();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq, AC.currentTime);
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.3, AC.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+dur);
+    o.connect(g); g.connect(gainNode); o.start(); o.stop(AC.currentTime+dur+0.02);
+  }
+  function noise(dur=.06,gain=.15){
+    ensureAC();
+    const n = AC.createBuffer(1, AC.sampleRate*dur, AC.sampleRate);
+    const d = n.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    const src=AC.createBufferSource(); src.buffer=n;
+    const g=AC.createGain(); g.gain.value=gain;
+    const hp=AC.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=5000;
+    src.connect(hp); hp.connect(g); g.connect(sfxGain); src.start(); src.stop(AC.currentTime+dur);
+  }
 
-    const tracks = [
-      { tempo:124, lead:[0,4,7,12, 0,4,7,12, 2,5,9,14, 2,5,9,14], bass:[-24,-24,-19,-24, -24,-24,-19,-24, -22,-22,-17,-22, -22,-22,-17,-22] },
-      { tempo:132, lead:[0,7,12,7,  2,9,14,9,  -1,5,9,5,  -3,4,7,4], bass:[-24,-19,-24,-31, -22,-17,-22,-29, -23,-19,-23,-30, -24,-19,-24,-31] },
-      { tempo:110, lead:[0,2,4,7,  7,9,11,14,  5,7,9,12,  12,14,16,19], bass:[-24,-24,-19,-24, -19,-19,-17,-19, -22,-22,-19,-22, -24,-24,-19,-24] },
-      { tempo:140, lead:[0,12,7,4,  2,14,9,5,  -1,11,7,2,  -3,9,4,0], bass:[-24,-12,-19,-24, -22,-10,-17,-22, -23,-12,-19,-23, -24,-12,-19,-24] },
-    ];
-    const freq = (base, semi)=> 440 * Math.pow(2, semi/12);
+  const tracks=[
+    { tempo:124, lead:[0,4,7,12,0,4,7,12,2,5,9,14,2,5,9,14], bass:[-24,-24,-19,-24,-24,-24,-19,-24,-22,-22,-17,-22,-22,-22,-17,-22] },
+    { tempo:132, lead:[0,7,12,7,2,9,14,9,-1,5,9,5,-3,4,7,4], bass:[-24,-19,-24,-31,-22,-17,-22,-29,-23,-19,-23,-30,-24,-19,-24,-31] },
+    { tempo:110, lead:[0,2,4,7,7,9,11,14,5,7,9,12,12,14,16,19], bass:[-24,-24,-19,-24,-19,-19,-17,-19,-22,-22,-19,-22,-24,-24,-19,-24] },
+    { tempo:140, lead:[0,12,7,4,2,14,9,5,-1,11,7,2,-3,9,4,0], bass:[-24,-12,-19,-24,-22,-10,-17,-22,-23,-12,-19,-23,-24,-12,-19,-24] },
+  ];
+  const freq=(base,semi)=>440*Math.pow(2, semi/12);
 
-    function startMusic(){
-      ensureAC();
-      if (playing) return;
-      playing = true; musicBtn.textContent = `⏸️ Track ${track+1}`;
-      step = 0; const len = 16;
-      const tick = ()=>{
-        if (!playing) return;
-        const { tempo, lead, bass } = tracks[track];
-        const spb = 60/tempo;
-        tone(freq(440, lead[step%len]-12), 0.20, "square", musicGain);
-        tone(freq(440, bass[step%len]), 0.22, "triangle", musicGain);
-        if (step % 2 === 0) noise(0.03, 0.08);
-        step = (step+1)%len;
-        seqTimer = setTimeout(tick, spb*1000);
-      };
-      tick();
-    }
-    function stopMusic(){
-      playing = false; if (seqTimer) clearTimeout(seqTimer), seqTimer=null;
-      musicBtn.textContent = `▶️ Track ${track+1}`;
-    }
-    musicBtn.addEventListener("click", ()=>{
-      ensureAC();
-      if (playing){ stopMusic(); track = (track+1) % tracks.length; startMusic(); showToast(`🎶 Track ${track+1}`); }
-      else { startMusic(); showToast(`🎶 Track ${track+1}`); }
-    });
-    let pressT=null;
-    musicBtn.addEventListener("pointerdown", ()=>{ pressT = setTimeout(()=>{ if (playing) stopMusic(); else startMusic(); }, 450); });
-    ["pointerup","pointerleave"].forEach(e=>musicBtn.addEventListener(e, ()=>{ if (pressT) clearTimeout(pressT); }));
-    vol.addEventListener("input", ()=>{
-      ensureAC();
-      musicGain.gain.value = Number(vol.value);
-      sfxGain.gain.value = Math.min(1, Number(vol.value)*1.1 + 0.2);
-    });
-
-    const sfx = {
-      found(){ tone(880,.12,"square"); setTimeout(()=>tone(1320,.12,"square"),120); },
-      add(){ tone(760,.10,"square"); setTimeout(()=>tone(920,.10,"square"),100); },
-      delete(){ tone(220,.10,"sawtooth"); setTimeout(()=>tone(180,.12,"sawtooth"),100); },
-      clear(){ noise(.08,.25); tone(400,.08,"triangle"); }
+  function startMusic(){
+    ensureAC(); if(playing) return;
+    playing = true; musicBtn.textContent=`⏸️ Track ${track+1}`;
+    step=0; const len=16;
+    const tick=()=>{
+      if(!playing) return;
+      const { tempo, lead, bass } = tracks[track];
+      const spb = 60/tempo;
+      tone(freq(440, lead[step%len]-12), .20, "square", musicGain);
+      tone(freq(440, bass[step%len]), .22, "triangle", musicGain);
+      if (step%2===0) noise(.03,.08);
+      step=(step+1)%len;
+      seqTimer=setTimeout(tick, spb*1000);
     };
+    tick();
+  }
+  function stopMusic(){ playing=false; if(seqTimer) clearTimeout(seqTimer), seqTimer=null; musicBtn.textContent=`▶️ Track ${track+1}`; }
 
-    /* Emoji floaters & bursts */
-    const field = $("field");
-    const floaters = ["🐱","🐾","😺","✨","🧶","💫","🪄"];
-    function spawnFloater(){
-      const e = document.createElement("div");
-      e.className="drift";
-      e.textContent = floaters[Math.floor(Math.random()*floaters.length)];
-      const x = Math.random()*innerWidth;
-      const dx = (Math.random()*2-1)*200;
-      const dur = 10 + Math.random()*10;
-      e.style.setProperty("--x", x+"px");
-      e.style.setProperty("--dx", dx+"px");
-      e.style.setProperty("--dur", dur+"s");
-      e.style.left = "0"; e.style.top = "0";
-      field.appendChild(e);
-      setTimeout(()=>e.remove(), dur*1000 + 200);
+  musicBtn.addEventListener("click", ()=>{
+    ensureAC();
+    if (playing){ stopMusic(); track=(track+1)%tracks.length; startMusic(); showToast(`🎶 Track ${track+1}`); }
+    else { startMusic(); showToast(`🎶 Track ${track+1}`); }
+  });
+  vol.addEventListener("input", ()=>{ ensureAC(); musicGain.gain.value=Number(vol.value); sfxGain.gain.value=Math.min(1, Number(vol.value)*1.1+0.2); });
+
+  const sfx={ found(){ tone(880,.12,"square"); setTimeout(()=>tone(1320,.12,"square"),120); },
+              add(){ tone(760,.10,"square"); setTimeout(()=>tone(920,.10,"square"),100); },
+              delete(){ tone(220,.10,"sawtooth"); setTimeout(()=>tone(180,.12,"sawtooth"),100); },
+              clear(){ noise(.08,.25); tone(400,.08,"triangle"); } };
+
+  // Emoji floaters (faster)
+  const field=$("field"); const floaters=["🐱","🐾","😺","✨","🧶","💫","🪄"];
+  function spawnFloater(){
+    const e=document.createElement("div"); e.className="drift";
+    e.textContent=floaters[Math.floor(Math.random()*floaters.length)];
+    const x=Math.random()*innerWidth, dx=(Math.random()*2-1)*220, dur=8+Math.random()*8;
+    e.style.setProperty("--x", x+"px"); e.style.setProperty("--dx", dx+"px"); e.style.setProperty("--dur", dur+"s");
+    e.style.left="0"; e.style.top="0";
+    field.appendChild(e);
+    setTimeout(()=>e.remove(), dur*1000+200);
+  }
+  for(let i=0;i<24;i++) spawnFloater();
+  setInterval(spawnFloater, 450);
+
+  function burstAt(x,y,count=10){
+    const em=["🐾","✨","😺","💖","🧶","🌟"];
+    for(let i=0;i<count;i++){
+      const b=document.createElement("div"); b.className="burst"; b.textContent=em[Math.floor(Math.random()*em.length)];
+      b.style.left=x+"px"; b.style.top=y+"px";
+      const r=60+Math.random()*60, a=Math.random()*Math.PI*2;
+      b.style.setProperty("--tx",(Math.cos(a)*r)+"px"); b.style.setProperty("--ty",(Math.sin(a)*r)+"px");
+      document.body.appendChild(b); setTimeout(()=>b.remove(),600);
     }
-    for(let i=0;i<22;i++) spawnFloater();
-    setInterval(spawnFloater, 650);
+  }
 
-    function burstAt(x,y,count=10){
-      const em = ["🐾","✨","😺","💖","🧶","🌟"];
-      for (let i=0;i<count;i++){
-        const b = document.createElement("div");
-        b.className="burst";
-        b.textContent = em[Math.floor(Math.random()*em.length)];
-        b.style.left = x+"px"; b.style.top = y+"px";
-        const r = 60 + Math.random()*60;
-        const ang = Math.random()*Math.PI*2;
-        b.style.setProperty("--tx", (Math.cos(ang)*r)+"px");
-        b.style.setProperty("--ty", (Math.sin(ang)*r)+"px");
-        document.body.appendChild(b);
-        setTimeout(()=>b.remove(), 600);
-      }
-    }
+  // Data / render
+  const state={ found:0,total:0,game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
+  let expanded=false, lastTotal=0;
 
-    /* Data & render */
-    const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
-    let expanded = false, lastTotal = 0;
+  function render(){
+    gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
+    score.textContent = `${state.found} / ${state.total}`;
+    bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
 
-    function render(){
-      gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
-      score.textContent = `${state.found} / ${state.total}`;
-      bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
+    const logs=state.history||[];
+    const show = expanded ? logs : logs.slice(0,4);
+    activity.innerHTML = show.map(h=>{
+      const icon = h.type==='found+'?'✅':'➕';
+      const visibleName = (isAdmin || h.type==='found+') ? (h.name||'Unnamed') : '🫥 Hidden';
+      const when = new Date(h.when).toLocaleString();
+      return `<li class="li"><div>${icon} <b>${escapeHTML(visibleName)}</b> <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${when}</div></li>`;
+    }).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
 
-      const logs = state.history || [];
-      const show = expanded ? logs : logs.slice(0,4);
-      activity.innerHTML = show.map(h=>{
-        const icon = h.type==='found+'?'✅':'➕';
-        const name = h.name || '🫥 Hidden';
-        const when = new Date(h.when).toLocaleString();
-        return `<li class="li"><div>${icon} <b>${escapeHTML(name)}</b> <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${when}</div></li>`;
-      }).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
+    moreToggle.textContent = expanded ? "Show less" : "Show more";
+    adminAdd.style.display = isAdmin ? "block" : "none";
+    adminActions.style.display = isAdmin ? "flex" : "none";
+    adminBadge.style.display = isAdmin ? "inline-block" : "none";
 
-      moreToggle.textContent = expanded ? "Show less" : "Show more";
-      adminAdd.style.display = isAdmin ? "block" : "none";
-      adminActions.style.display = isAdmin ? "flex" : "none";
-      adminBadge.style.display = isAdmin ? "inline-block" : "none";
+    cats.innerHTML = (state.hidden_cats||[]).map(c=>{
+      const displayName = (c.found || isAdmin) ? (c.name||'Unnamed') : '🫥 Hidden';
+      const left = `${c.found?'✅':'❓'} <b>${escapeHTML(displayName)}</b> <span class="muted">· ${escapeHTML(c.color)} · ${escapeHTML(c.where)}</span>`;
+      const right = isAdmin
+        ? `<button class="btn danger" data-del="${escapeHTML(c.id)}">Delete</button>`
+        : ``;
+      return `<li class="catrow"><div>${left}</div><div>${right}</div></li>`;
+    }).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
+  }
 
-      cats.innerHTML = (state.hidden_cats||[]).map(c=>{
-        const left = `${c.found?'✅':'❓'} <b>${escapeHTML(c.name||'🫥 Hidden')}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span>`;
-        const del = isAdmin ? `<button class="btn danger" data-del="${c.id}">Delete</button>` : "";
-        return `<li class="catrow">${left} <span style="margin-left:auto"></span>${del}</li>`;
-      }).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
+  function applyBurstFrom(el){
+    const r = el.getBoundingClientRect();
+    burstAt(r.left + r.width/2, r.top + r.height/2, 12);
+  }
 
-      if (isAdmin){
-        cats.querySelectorAll("[data-del]").forEach(btn=>{
-          btn.onclick = async (e)=>{
-            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); sfx.delete(); burstAt(e.clientX||0,e.clientY||0,10); }
-            catch(err){ uiStatus(false, err.message||err); }
-          }
-        });
-      }
-    }
+  async function call(action, body={}){
+    const opts = { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, ...body }) };
+    const res = await fetch(FN, opts);
+    if(!res.ok){ throw new Error(await res.text()); }
+    return res.json();
+  }
 
-    moreToggle.onclick = ()=>{ expanded = !expanded; render(); };
-
-    async function get(){
-      const url = FN + (isAdmin ? `?admin=${encodeURIComponent(adminCode)}` : "");
-      const headers = isAdmin ? { "x-admin-code": adminCode } : {};
-      const r = await fetch(url, { headers });
-      if(!r.ok){ throw new Error(await r.text()); }
-      return r.json();
-    }
-    async function post(body){
-      const url = FN + (isAdmin ? `?admin=${encodeURIComponent(adminCode)}` : "");
-      const headers = Object.assign({ 'content-type':'application/json' }, isAdmin ? { "x-admin-code": adminCode } : {});
-      const r = await fetch(url,{ method:"POST", headers, body: JSON.stringify(body) });
-      const txt = await r.text();
-      let json; try{ json = JSON.parse(txt) }catch{ json = null }
-      if(!r.ok){ throw new Error(json?.error || txt || r.status); }
-      Object.assign(state, json);
+  async function load(){
+    try{
+      const data = await call('status', { admin: adminCode });
+      Object.assign(state, data);
       render();
-      return json;
+      uiStatus(true, "Connected ✓");
+    }catch(e){
+      uiStatus(false, "Could not connect. If this keeps happening, reload.");
+      console.error(e);
     }
+  }
 
-    $("foundBtn").addEventListener("click", async (e)=>{
-      try{
-        const color = $("fColor").value, location = $("fLoc").value;
-        await post({ action:"found", color, location });
-        foundResult.textContent = "Nice! One revealed 🎉";
-        sfx.found(); burstAt(e.clientX||0, e.clientY||0, 14);
-      }catch(err){
-        uiStatus(false, (err?.message||err));
-        foundResult.textContent = "";
-      }
-    });
+  // actions
+  $("foundBtn").addEventListener("click", async (ev)=>{
+    const color=$("fColor").value, where=$("fLoc").value;
+    try{
+      const data = await call('found', { color, where });
+      Object.assign(state, data);
+      render();
+      foundResult.textContent = `Nice! Counted ${color} in ${where}.`;
+      sfx.found(); applyBurstFrom(ev.currentTarget);
+    }catch(e){ uiStatus(false, "Could not count. Try again?"); }
+  });
 
-    $("addBtn").addEventListener("click", async (e)=>{
-      try{
-        const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
-        await post({ action:"addHidden", color, location, name });
-        $("aName").value = "";
-        sfx.add(); burstAt(e.clientX||0, e.clientY||0, 14);
-      }catch(err){ uiStatus(false, "Add failed: "+(err?.message||err)); }
-    });
+  $("addBtn").addEventListener("click", async (ev)=>{
+    const color=$("aColor").value, where=$("aLoc").value, name=$("aName").value.trim();
+    if(!isAdmin){ showToast("Admin only"); return; }
+    try{
+      const data = await call('add', { admin: adminCode, color, where, name });
+      Object.assign(state, data);
+      render(); $("aName").value="";
+      showToast("EMYL HAS ADDED A NEW CAT");
+      sfx.add(); applyBurstFrom(ev.currentTarget);
+    }catch(e){ uiStatus(false, "Add failed."); }
+  });
 
-    $("clearHistory").addEventListener("click", async (e)=>{
-      if(!confirm("Clear the whole activity log?")) return;
-      try{ await post({ action:"clearHistory" }); sfx.clear(); burstAt(e.clientX||0, e.clientY||0, 18); }
-      catch(err){ uiStatus(false, "Clear failed: "+(err?.message||err)); }
-    });
+  $("clearHistory").addEventListener("click", async (ev)=>{
+    if(!isAdmin){ showToast("Admin only"); return; }
+    try{
+      const data = await call('clear_activity', { admin: adminCode });
+      Object.assign(state, data); render();
+      showToast("Activity cleared"); sfx.clear(); applyBurstFrom(ev.currentTarget);
+    }catch(e){ uiStatus(false, "Clear failed"); }
+  });
 
-    // Player polling (for “new cat” toast)
-    setInterval(async ()=>{
-      try{
-        if (isAdmin) return;
-        const data = await get();
-        if (typeof lastTotal === "number" && data.total > lastTotal) {
-          showToast("✨ Emyl added a new cat!");
-          sfx.add();
-        }
-        lastTotal = data.total;
-        Object.assign(state, data); render();
-      }catch{}
-    }, 12000);
+  cats.addEventListener("click", async (e)=>{
+    const id=e.target?.dataset?.del;
+    if(!id) return;
+    if(!isAdmin){ showToast("Admin only"); return; }
+    try{
+      const data = await call('delete_cat', { admin: adminCode, id });
+      Object.assign(state, data); render();
+      showToast("Deleted"); sfx.delete(); applyBurstFrom(e.target);
+    }catch(err){ uiStatus(false,"Delete failed"); }
+  });
 
-    // boot
-    (async ()=>{
-      try{
-        uiStatus(true,"Connecting to database…");
-        const data = await get();
+  moreToggle.addEventListener("click", ()=>{ expanded=!expanded; render(); });
+
+  // auto-refresh on total change (server pushes)
+  setInterval(async()=>{
+    try{
+      const data = await call('status', { admin: adminCode });
+      if (data.total !== lastTotal){
         lastTotal = data.total;
         Object.assign(state, data);
-        uiStatus(true, isAdmin ? "Connected ✓ (admin)" : "Connected ✓");
         render();
-      }catch(e){
-        uiStatus(false, "GET error: "+(e?.message||e));
       }
-    })();
-  })();
-  </script>
+    }catch(_){}
+  }, 6000);
+
+  load();
+})();
+</script>
 </body>
 </html>
