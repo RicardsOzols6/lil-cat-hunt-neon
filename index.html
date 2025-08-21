@@ -6,14 +6,28 @@
   <title>Lil Cat Hunt 🐾</title>
   <style>
     :root{
-      --bg1:#ffeaf3; --bg2:#f4e8ff; --card:#ffffff; --txt:#0f172a; --muted:#64748b; --accent:#ec4899;
+      --card:#ffffff; --txt:#0f172a; --muted:#64748b; --accent:#ec4899;
       --ok:#dcfce7; --okb:#bbf7d0; --oktxt:#065f46; --err:#fee2e2; --errb:#fecaca; --errtxt:#7f1d1d;
       --chip:#fde68a;
     }
-    html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--txt);}
+    html,body{margin:0;padding:0;height:100%}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:var(--txt);
+      background: radial-gradient(1200px 1200px at 10% 10%, #ffe9f2, transparent 60%),
+                  radial-gradient(1200px 1200px at 90% 20%, #f3e8ff, transparent 60%),
+                  radial-gradient(1200px 1200px at 50% 100%, #e0f2fe, transparent 60%);
+      animation: floatBG 20s linear infinite;
+      background-size: 200% 200%;
+    }
+    @keyframes floatBG {
+      0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+      50%{ background-position: 100% 50%, 0% 50%, 50% 0%; }
+      100%{ background-position: 0% 0%, 100% 0%, 50% 100%; }
+    }
     .wrap{max-width:980px;margin:0 auto;padding:24px;}
     h1{margin:0 0 12px 0;letter-spacing:0.2px}
-    .card{background:var(--card);border:2px solid #fecdd3;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;}
+    .card{background:var(--card);border:2px solid #fecdd3;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,0.06);padding:16px;margin-bottom:16px;backdrop-filter:saturate(120%) blur(2px)}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .title{font-size:20px;font-weight:800;margin:0 0 6px 0;display:flex;gap:10px;align-items:center}
     .muted{color:var(--muted);font-size:12px}
@@ -21,7 +35,7 @@
     .btn.primary{background:var(--accent);color:white}
     .btn.ghost{background:white;border:2px solid #e2e8f0}
     .btn.danger{background:#ef4444;color:white}
-    select,input[type=text],input[type=number]{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;font:inherit}
+    select,input[type=text]{border:2px solid #e2e8f0;border-radius:12px;padding:10px 12px;outline:none;font:inherit;background:#fff}
     .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#f1f5f9}
     .chip{background:var(--chip);padding:2px 8px;border-radius:999px;font-size:12px}
     .progress{height:10px;border-radius:999px;background:#ffe4e6;overflow:hidden}
@@ -33,6 +47,13 @@
     .err{background:var(--err);border:2px solid var(--errb);color:var(--errtxt);padding:10px 12px;border-radius:12px;margin-bottom:12px;white-space:pre-wrap}
     .section{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media (max-width:900px){.section{grid-template-columns:1fr}}
+    .toast{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.2);z-index:20;opacity:0;transition:.2s}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .emoji{position:fixed;pointer-events:none;font-size:22px;animation:pop 900ms ease-out forwards}
+    @keyframes pop {
+      0%{ transform:translate(var(--x,0),var(--y,0)) scale(.6) rotate(0deg); opacity:1 }
+      100%{ transform:translate(var(--xend,0),var(--yend,-160px)) scale(1.2) rotate(30deg); opacity:0 }
+    }
   </style>
 </head>
 <body>
@@ -50,18 +71,11 @@
     <div class="card">
       <div class="title">Found a Cat</div>
       <div class="row">
-        <select id="fColor">
-          <option>Black</option><option>Orange</option><option>Beige</option>
-        </select>
+        <select id="fColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
         <select id="fLoc">
-          <option>Kitchen</option>
-          <option>Emyl’s Bathroom</option>
-          <option>Richards Bathroom</option>
-          <option>Emyl’s Room</option>
-          <option>Richards Room</option>
-          <option>Storage Room 1</option>
-          <option>Storage Room 2</option>
-          <option>Hallway</option>
+          <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
+          <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
+          <option>Storage Room 2</option><option>Hallway</option>
         </select>
         <button class="btn primary" id="foundBtn">Count it 🐾</button>
       </div>
@@ -71,18 +85,11 @@
     <div class="card" id="adminAdd" style="display:none">
       <div class="title">Add Cat <span class="chip">Admin</span></div>
       <div class="row">
-        <select id="aColor">
-          <option>Black</option><option>Orange</option><option>Beige</option>
-        </select>
+        <select id="aColor"><option>Black</option><option>Orange</option><option>Beige</option></select>
         <select id="aLoc">
-          <option>Kitchen</option>
-          <option>Emyl’s Bathroom</option>
-          <option>Richards Bathroom</option>
-          <option>Emyl’s Room</option>
-          <option>Richards Room</option>
-          <option>Storage Room 1</option>
-          <option>Storage Room 2</option>
-          <option>Hallway</option>
+          <option>Kitchen</option><option>Emyl’s Bathroom</option><option>Richards Bathroom</option>
+          <option>Emyl’s Room</option><option>Richards Room</option><option>Storage Room 1</option>
+          <option>Storage Room 2</option><option>Hallway</option>
         </select>
         <input id="aName" type="text" placeholder="Name (Emyl sees this)" />
         <button class="btn ghost" id="addBtn">Add</button>
@@ -105,52 +112,64 @@
   </div>
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
 (function(){
   const FN = "/.netlify/functions/game";
   const $ = (id)=>document.getElementById(id);
-  const status = $("status");
-  const gameNameEl = $("gameName");
-  const score = $("score");
-  const bar = $("bar");
-  const foundResult = $("foundResult");
-  const activity = $("activity");
-  const cats = $("cats");
-  const adminAdd = $("adminAdd");
-  const adminActions = $("adminActions");
-  const moreToggle = $("moreToggle");
+  const status = $("status"), toast = $("toast");
+  const gameNameEl = $("gameName"), score = $("score"), bar = $("bar");
+  const foundResult = $("foundResult"), activity = $("activity"), cats = $("cats");
+  const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
 
-  // Admin mode via ?admin=CODE
   const params = new URLSearchParams(location.search);
   const adminCode = params.get("admin");
   const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
   const isAdmin = !!adminCode;
 
-  // --- Cute beeps/boops ---
-  const ding = (freq=880, ms=120)=>{ try{
+  const ding = (f=880, ms=120)=>{ try{
     const a = new (window.AudioContext||window.webkitAudioContext)();
-    const o = a.createOscillator(), g = a.createGain();
-    o.connect(g); g.connect(a.destination);
-    o.type="sine"; o.frequency.value=freq; g.gain.setValueAtTime(0.0001, a.currentTime);
+    const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination);
+    o.type="sine"; o.frequency.value=f; g.gain.setValueAtTime(0.0001, a.currentTime);
     g.gain.exponentialRampToValueAtTime(0.3, a.currentTime+0.02);
     o.start(); o.stop(a.currentTime + ms/1000);
   }catch{} };
 
-  function uiStatus(ok, msg){
-    status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`;
+  const emojis = ["🐱","🐾","✨","🎉","😺","💖","🌟"];
+  function burst(x=window.innerWidth/2,y=80){
+    for(let i=0;i<16;i++){
+      const s=document.createElement("div");
+      s.className="emoji"; s.textContent=emojis[i%emojis.length];
+      const dx=(Math.random()*2-1)*180, dy=- (80+Math.random()*140);
+      s.style.left=`${x}px`; s.style.top=`${y}px`;
+      s.style.setProperty('--x','0px'); s.style.setProperty('--y','0px');
+      s.style.setProperty('--xend', dx+'px'); s.style.setProperty('--yend', dy+'px');
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(), 1000);
+    }
   }
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(()=>toast.classList.remove("show"), 1800);
+  }
+
+  function uiStatus(ok, msg){ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; }
+  function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
 
   const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
 
-  function render(listExpanded=false){
+  let expanded = false;  // activity collapse
+  let lastTotal = 0;     // for popup polling
+
+  function render(){
     gameNameEl.textContent = state.game_name || "Lil Cat Hunt";
     score.textContent = `${state.found} / ${state.total}`;
     bar.style.width = state.total>0 ? Math.round(100*state.found/state.total)+'%' : '0%';
 
-    // Activity: show last 4, toggle for full
     const logs = state.history || [];
-    let show = logs;
-    if (!listExpanded) show = logs.slice(0,4);
+    const show = expanded ? logs : logs.slice(0,4);
     activity.innerHTML = show.map(h=>{
       const icon = h.type==='found+'?'✅':'➕';
       const name = h.name || '🫥 Hidden';
@@ -158,34 +177,27 @@
       return `<li class="li"><div>${icon} <b>${escapeHTML(name)}</b> <span class="muted">(${escapeHTML(h.color||'')}, ${escapeHTML(h.where||'')})</span></div><div class="muted">${when}</div></li>`;
     }).join("") || `<li class="li"><div class="muted">No adventures yet.</div></li>`;
 
-    moreToggle.textContent = listExpanded ? "Show less" : "Show more";
-    moreToggle.onclick = ()=>{ render(!listExpanded); };
+    moreToggle.textContent = expanded ? "Show less" : "Show more";
+    adminAdd.style.display = isAdmin ? "block" : "none";
+    adminActions.style.display = isAdmin ? "flex" : "none";
 
-    // Cats
     cats.innerHTML = (state.hidden_cats||[]).map(c=>{
       const left = `${c.found?'✅':'❓'} <b>${escapeHTML(c.name||'🫥 Hidden')}</b> <span class="muted">· ${escapeHTML(c.color||'')} · ${escapeHTML(c.location||'')}</span>`;
       const del = isAdmin ? `<button class="btn danger" data-del="${c.id}">Delete</button>` : "";
       return `<li class="catrow">${left} <span style="margin-left:auto"></span>${del}</li>`;
     }).join("") || `<li class="li"><div class="muted">No cats yet.</div></li>`;
 
-    // admin bits
-    adminAdd.style.display = isAdmin ? "block" : "none";
-    adminActions.style.display = isAdmin ? "flex" : "none";
-
-    // wire delete buttons
     if (isAdmin){
       cats.querySelectorAll("[data-del]").forEach(btn=>{
         btn.onclick = async ()=>{
-          try{
-            await post({ action:"deleteCat", id: Number(btn.dataset.del) });
-            ding(340,120);
-          }catch(e){ uiStatus(false, e.message||e); }
+          try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); ding(340,120); }
+          catch(e){ uiStatus(false, e.message||e); }
         }
       });
     }
   }
 
-  function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
+  moreToggle.onclick = ()=>{ expanded = !expanded; render(); };
 
   async function get(){
     const r = await fetch(FN + adminQS);
@@ -203,14 +215,16 @@
     return json;
   }
 
-  // actions
   $("foundBtn").addEventListener("click", async ()=>{
     try{
       const color = $("fColor").value, location = $("fLoc").value;
       await post({ action:"found", color, location });
       foundResult.textContent = "Nice! One revealed 🎉";
-      ding(880,120); setTimeout(()=>ding(1320,120),120);
-    }catch(e){ uiStatus(false, "Found failed: "+(e?.message||e)); }
+      ding(880,120); setTimeout(()=>ding(1320,120),120); burst();
+    }catch(e){
+      uiStatus(false, (e?.message||e));
+      foundResult.textContent = "";
+    }
   });
 
   $("addBtn").addEventListener("click", async ()=>{
@@ -218,23 +232,36 @@
       const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
       await post({ action:"addHidden", color, location, name });
       $("aName").value = "";
-      ding(700,120);
+      ding(700,120); burst();
     }catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
   });
 
   $("clearHistory").addEventListener("click", async ()=>{
     if(!confirm("Clear the whole activity log?")) return;
-    try{
-      await post({ action:"clearHistory" });
-      ding(300,120);
-    }catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
+    try{ await post({ action:"clearHistory" }); ding(300,120); }
+    catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
   });
+
+  // Poll every 15s: if total increases (and you’re NOT admin), show popup
+  setInterval(async ()=>{
+    try{
+      if (isAdmin) return;
+      const data = await get();
+      if (typeof lastTotal === "number" && data.total > lastTotal) {
+        showToast("✨ Emyl added a new cat!");
+        burst();
+      }
+      lastTotal = data.total;
+      Object.assign(state, data); render();
+    }catch{}
+  }, 15000);
 
   // boot
   (async ()=>{
     try{
       uiStatus(true,"Connecting to database…");
       const data = await get();
+      lastTotal = data.total;
       Object.assign(state, data);
       uiStatus(true,"Connected ✓");
       render();
