@@ -45,8 +45,14 @@
       8%{ opacity:.9 }
       100%{ transform: translate(calc(var(--x,0) + var(--dx,0)), -10vh) rotate(540deg) scale(1.25); opacity:0 }
     }
+    .burst{ position:absolute; font-size:22px; animation: pop .6s ease-out forwards; }
+    @keyframes pop {
+      0%{ transform: translate(-50%,-50%) scale(.5) rotate(0deg); opacity:0 }
+      20%{ opacity:1 }
+      100%{ transform: translate(var(--tx),var(--ty)) scale(1.4) rotate(360deg); opacity:0 }
+    }
 
-    .wrap{ max-width:1000px; margin:0 auto; padding:28px; position:relative; z-index:1 }
+    .wrap{ max-width:1000px; margin:0 auto; padding:28px; padding-bottom:120px; position:relative; z-index:1 }
 
     h1{
       margin:0 0 14px 0;
@@ -92,7 +98,7 @@
     }
 
     .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12)}
-    .chip{background:rgba(253, 230, 138, .25); padding:2px 8px; border:1px solid rgba(253, 230, 138, .45); border-radius:999px; font-size:12px; color:#fde68a}
+    .chip{background:rgba(122,92,255,.25); padding:2px 8px; border:1px solid rgba(122,92,255,.45); border-radius:999px; font-size:12px; color:#e9ddff}
 
     .progress{height:12px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
     .bar{height:100%;background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));width:0%; box-shadow: inset 0 0 14px rgba(255,255,255,.25)}
@@ -118,9 +124,8 @@
       border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:8px 10px;
       box-shadow: 0 8px 20px rgba(0,0,0,.35);
     }
-    .soundbar input[type=range]{ width:120px }
+    .soundbar input[type=range]{ width:130px }
     .adminBadge{ margin-left:8px; font-size:12px; background:rgba(122,92,255,.25); border:1px solid rgba(122,92,255,.45); padding:2px 8px; border-radius:999px }
-    .adminLink{ font-size:12px; color:#cdb6ff; cursor:pointer; text-decoration:underline; margin-left:8px }
   </style>
 </head>
 <body>
@@ -135,7 +140,6 @@
         <span id="gameName">Lil Cat Hunt</span>
         <span class="pill" id="score">0 / 0</span>
         <span id="adminBadge" class="adminBadge" style="display:none">Admin</span>
-        <span id="adminChange" class="adminLink">change admin code</span>
       </div>
       <div class="muted">Shared scoreboard. Names stay 🫥 hidden until you find them.</div>
       <div class="progress" style="margin-top:10px"><div class="bar" id="bar" style="width:0%"></div></div>
@@ -188,7 +192,7 @@
 
   <div id="toast" class="toast"></div>
 
-  <div class="soundbar">
+  <div class="soundbar" id="soundbar">
     <button id="musicToggle" class="btn ghost">▶️ Track 1</button>
     <span class="muted" style="font-size:12px">Vol</span>
     <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35">
@@ -204,28 +208,19 @@
     const gameNameEl = $("gameName"), score = $("score"), bar = $("bar");
     const foundResult = $("foundResult"), activity = $("activity"), cats = $("cats");
     const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
-    const adminBadge = $("adminBadge"), adminChange = $("adminChange");
+    const adminBadge = $("adminBadge");
 
     /* helpers */
     const showToast = (msg)=>{ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1800); };
     const escapeHTML=(s)=>String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
     const uiStatus=(ok,msg)=>{ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; };
 
-    /* Admin detection */
+    /* ADMIN – only when ?admin= is present */
     const urlParams = new URLSearchParams(location.search);
-    let adminCode = urlParams.get("admin") || localStorage.getItem("catHuntAdminCode") || "";
-    if (urlParams.get("admin")) localStorage.setItem("catHuntAdminCode", adminCode);
+    const adminCode = urlParams.get("admin") || "";  // no localStorage, no change-link
     const isAdmin = !!adminCode;
-    const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
     if (isAdmin) adminBadge.style.display = "inline-block";
-    adminChange.onclick = ()=>{
-      const n = prompt("Enter admin code (saved on this device):", adminCode || "");
-      if (n !== null) {
-        adminCode = n.trim();
-        if (adminCode) localStorage.setItem("catHuntAdminCode", adminCode); else localStorage.removeItem("catHuntAdminCode");
-        location.href = adminCode ? (`?admin=${encodeURIComponent(adminCode)}`) : location.pathname;
-      }
-    };
+    const adminQS = isAdmin ? `?admin=${encodeURIComponent(adminCode)}` : "";
 
     /* AUDIO */
     let AC, master, musicGain, sfxGain, playing=false, track=0, seqTimer=null, step=0;
@@ -273,19 +268,19 @@
       { tempo:110, lead:[0,2,4,7,  7,9,11,14,  5,7,9,12,  12,14,16,19], bass:[-24,-24,-19,-24, -19,-19,-17,-19, -22,-22,-19,-22, -24,-24,-19,-24] },
       { tempo:140, lead:[0,12,7,4,  2,14,9,5,  -1,11,7,2,  -3,9,4,0], bass:[-24,-12,-19,-24, -22,-10,-17,-22, -23,-12,-19,-23, -24,-12,-19,-24] },
     ];
-    const freq = (base, semi)=> base * Math.pow(2, semi/12);
+    const freq = (base, semi)=> 440 * Math.pow(2, semi/12);
 
     function startMusic(){
       ensureAC();
       if (playing) return;
       playing = true; musicBtn.textContent = `⏸️ Track ${track+1}`;
-      const base = 440; step = 0; const len = 16;
+      step = 0; const len = 16;
       const tick = ()=>{
         if (!playing) return;
         const { tempo, lead, bass } = tracks[track];
         const spb = 60/tempo;
-        tone(freq(base, lead[step%len]-12), 0.20, "square", musicGain);
-        tone(freq(base, bass[step%len]), 0.22, "triangle", musicGain);
+        tone(freq(440, lead[step%len]-12), 0.20, "square", musicGain);
+        tone(freq(440, bass[step%len]), 0.22, "triangle", musicGain);
         if (step % 2 === 0) noise(0.03, 0.08);
         step = (step+1)%len;
         seqTimer = setTimeout(tick, spb*1000);
@@ -317,7 +312,7 @@
       clear(){ noise(.08,.25); tone(400,.08,"triangle"); }
     };
 
-    /* Emojis */
+    /* Emoji floaters & bursts */
     const field = $("field");
     const floaters = ["🐱","🐾","😺","✨","🧶","💫","🪄"];
     function spawnFloater(){
@@ -326,7 +321,7 @@
       e.textContent = floaters[Math.floor(Math.random()*floaters.length)];
       const x = Math.random()*innerWidth;
       const dx = (Math.random()*2-1)*200;
-      const dur = 10 + Math.random()*10; // 10-20s
+      const dur = 10 + Math.random()*10;
       e.style.setProperty("--x", x+"px");
       e.style.setProperty("--dx", dx+"px");
       e.style.setProperty("--dur", dur+"s");
@@ -335,7 +330,23 @@
       setTimeout(()=>e.remove(), dur*1000 + 200);
     }
     for(let i=0;i<22;i++) spawnFloater();
-    setInterval(spawnFloater, 700);
+    setInterval(spawnFloater, 650);
+
+    function burstAt(x,y,count=10){
+      const em = ["🐾","✨","😺","💖","🧶","🌟"];
+      for (let i=0;i<count;i++){
+        const b = document.createElement("div");
+        b.className="burst";
+        b.textContent = em[Math.floor(Math.random()*em.length)];
+        b.style.left = x+"px"; b.style.top = y+"px";
+        const r = 60 + Math.random()*60;
+        const ang = Math.random()*Math.PI*2;
+        b.style.setProperty("--tx", (Math.cos(ang)*r)+"px");
+        b.style.setProperty("--ty", (Math.sin(ang)*r)+"px");
+        document.body.appendChild(b);
+        setTimeout(()=>b.remove(), 600);
+      }
+    }
 
     /* Data & render */
     const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
@@ -368,9 +379,9 @@
 
       if (isAdmin){
         cats.querySelectorAll("[data-del]").forEach(btn=>{
-          btn.onclick = async ()=>{
-            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); sfx.delete(); }
-            catch(e){ uiStatus(false, e.message||e); }
+          btn.onclick = async (e)=>{
+            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); sfx.delete(); burstAt(e.clientX||0,e.clientY||0,10); }
+            catch(err){ uiStatus(false, err.message||err); }
           }
         });
       }
@@ -379,18 +390,16 @@
     moreToggle.onclick = ()=>{ expanded = !expanded; render(); };
 
     async function get(){
-      const url = FN + (adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "");
-      const r = await fetch(url, { headers: adminCode ? { "x-admin-code": adminCode } : {} });
+      const url = FN + (isAdmin ? `?admin=${encodeURIComponent(adminCode)}` : "");
+      const headers = isAdmin ? { "x-admin-code": adminCode } : {};
+      const r = await fetch(url, { headers });
       if(!r.ok){ throw new Error(await r.text()); }
       return r.json();
     }
     async function post(body){
-      const url = FN + (adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "");
-      const r = await fetch(url,{
-        method:"POST",
-        headers: Object.assign({ 'content-type':'application/json' }, adminCode ? { "x-admin-code": adminCode } : {}),
-        body: JSON.stringify(body)
-      });
+      const url = FN + (isAdmin ? `?admin=${encodeURIComponent(adminCode)}` : "");
+      const headers = Object.assign({ 'content-type':'application/json' }, isAdmin ? { "x-admin-code": adminCode } : {});
+      const r = await fetch(url,{ method:"POST", headers, body: JSON.stringify(body) });
       const txt = await r.text();
       let json; try{ json = JSON.parse(txt) }catch{ json = null }
       if(!r.ok){ throw new Error(json?.error || txt || r.status); }
@@ -399,34 +408,34 @@
       return json;
     }
 
-    $("foundBtn").addEventListener("click", async ()=>{
+    $("foundBtn").addEventListener("click", async (e)=>{
       try{
         const color = $("fColor").value, location = $("fLoc").value;
         await post({ action:"found", color, location });
         foundResult.textContent = "Nice! One revealed 🎉";
-        sfx.found();
-      }catch(e){
-        uiStatus(false, (e?.message||e));
+        sfx.found(); burstAt(e.clientX||0, e.clientY||0, 14);
+      }catch(err){
+        uiStatus(false, (err?.message||err));
         foundResult.textContent = "";
       }
     });
 
-    $("addBtn").addEventListener("click", async ()=>{
+    $("addBtn").addEventListener("click", async (e)=>{
       try{
         const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
         await post({ action:"addHidden", color, location, name });
         $("aName").value = "";
-        sfx.add();
-      }catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
+        sfx.add(); burstAt(e.clientX||0, e.clientY||0, 14);
+      }catch(err){ uiStatus(false, "Add failed: "+(err?.message||err)); }
     });
 
-    $("clearHistory").addEventListener("click", async ()=>{
+    $("clearHistory").addEventListener("click", async (e)=>{
       if(!confirm("Clear the whole activity log?")) return;
-      try{ await post({ action:"clearHistory" }); sfx.clear(); }
-      catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
+      try{ await post({ action:"clearHistory" }); sfx.clear(); burstAt(e.clientX||0, e.clientY||0, 18); }
+      catch(err){ uiStatus(false, "Clear failed: "+(err?.message||err)); }
     });
 
-    // Poll (player only) for "NEW CAT!" toast
+    // Player polling (for “new cat” toast)
     setInterval(async ()=>{
       try{
         if (isAdmin) return;
@@ -440,7 +449,7 @@
       }catch{}
     }, 12000);
 
-    // boot (with visible error if something throws)
+    // boot
     (async ()=>{
       try{
         uiStatus(true,"Connecting to database…");
