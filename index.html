@@ -198,22 +198,28 @@
   (function(){
     const FN = "/.netlify/functions/game";
     const $ = (id)=>document.getElementById(id);
-    const status = $("status"), toast = $("toast");
+
+    const status = $("status");
+    const toast = $("toast");
     const gameNameEl = $("gameName"), score = $("score"), bar = $("bar");
     const foundResult = $("foundResult"), activity = $("activity"), cats = $("cats");
     const adminAdd = $("adminAdd"), adminActions = $("adminActions"), moreToggle = $("moreToggle");
     const adminBadge = $("adminBadge"), adminChange = $("adminChange");
 
-    /* ===== Admin detection: URL param OR localStorage; send header + QS ===== */
+    /* helpers */
+    const showToast = (msg)=>{ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1800); };
+    const escapeHTML=(s)=>String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    const uiStatus=(ok,msg)=>{ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; };
+
+    /* Admin detection */
     const urlParams = new URLSearchParams(location.search);
     let adminCode = urlParams.get("admin") || localStorage.getItem("catHuntAdminCode") || "";
     if (urlParams.get("admin")) localStorage.setItem("catHuntAdminCode", adminCode);
     const isAdmin = !!adminCode;
     const adminQS = adminCode ? `?admin=${encodeURIComponent(adminCode)}` : "";
-
     if (isAdmin) adminBadge.style.display = "inline-block";
     adminChange.onclick = ()=>{
-      const n = prompt("Enter admin code (will save in this device only):", adminCode || "");
+      const n = prompt("Enter admin code (saved on this device):", adminCode || "");
       if (n !== null) {
         adminCode = n.trim();
         if (adminCode) localStorage.setItem("catHuntAdminCode", adminCode); else localStorage.removeItem("catHuntAdminCode");
@@ -221,7 +227,7 @@
       }
     };
 
-    /* ========= AUDIO (chiptune + SFX) ========= */
+    /* AUDIO */
     let AC, master, musicGain, sfxGain, playing=false, track=0, seqTimer=null, step=0;
     const musicBtn = $("musicToggle"); const vol = $("vol");
 
@@ -234,7 +240,6 @@
       }
       if (AC.state === "suspended") AC.resume();
     }
-    // wake AudioContext on first user gesture (mobile Safari etc.)
     ["pointerdown","click","touchstart"].forEach(evt=>{
       window.addEventListener(evt, ()=>{ ensureAC(); }, { once:true, passive:true });
     });
@@ -262,29 +267,29 @@
       src.start(); src.stop(AC.currentTime+dur);
     }
 
-    // 4 tiny tracks (lead/bass patterns); click cycles tracks; long-press toggles pause/play
     const tracks = [
       { tempo:124, lead:[0,4,7,12, 0,4,7,12, 2,5,9,14, 2,5,9,14], bass:[-24,-24,-19,-24, -24,-24,-19,-24, -22,-22,-17,-22, -22,-22,-17,-22] },
       { tempo:132, lead:[0,7,12,7,  2,9,14,9,  -1,5,9,5,  -3,4,7,4], bass:[-24,-19,-24,-31, -22,-17,-22,-29, -23,-19,-23,-30, -24,-19,-24,-31] },
       { tempo:110, lead:[0,2,4,7,  7,9,11,14,  5,7,9,12,  12,14,16,19], bass:[-24,-24,-19,-24, -19,-19,-17,-19, -22,-22,-19,-22, -24,-24,-19,-24] },
       { tempo:140, lead:[0,12,7,4,  2,14,9,5,  -1,11,7,2,  -3,9,4,0], bass:[-24,-12,-19,-24, -22,-10,-17,-22, -23,-12,-19,-23, -24,-12,-19,-24] },
     ];
-    function freqFromSemitone(base, semi){ return base * Math.pow(2, semi/12); }
+    const freq = (base, semi)=> base * Math.pow(2, semi/12);
+
     function startMusic(){
       ensureAC();
       if (playing) return;
       playing = true; musicBtn.textContent = `⏸️ Track ${track+1}`;
-      const baseFreq = 440; step = 0; const patLen = 16;
-      function tick(){
+      const base = 440; step = 0; const len = 16;
+      const tick = ()=>{
         if (!playing) return;
         const { tempo, lead, bass } = tracks[track];
         const spb = 60/tempo;
-        tone(freqFromSemitone(baseFreq, lead[step%patLen]-12), 0.20, "square", musicGain);
-        tone(freqFromSemitone(baseFreq, bass[step%patLen]), 0.22, "triangle", musicGain);
+        tone(freq(base, lead[step%len]-12), 0.20, "square", musicGain);
+        tone(freq(base, bass[step%len]), 0.22, "triangle", musicGain);
         if (step % 2 === 0) noise(0.03, 0.08);
-        step = (step+1)%patLen;
+        step = (step+1)%len;
         seqTimer = setTimeout(tick, spb*1000);
-      }
+      };
       tick();
     }
     function stopMusic(){
@@ -293,15 +298,12 @@
     }
     musicBtn.addEventListener("click", ()=>{
       ensureAC();
-      // if playing → switch to next track; if paused → start current track
       if (playing){ stopMusic(); track = (track+1) % tracks.length; startMusic(); showToast(`🎶 Track ${track+1}`); }
       else { startMusic(); showToast(`🎶 Track ${track+1}`); }
     });
-    // long-press toggles pause/play
     let pressT=null;
     musicBtn.addEventListener("pointerdown", ()=>{ pressT = setTimeout(()=>{ if (playing) stopMusic(); else startMusic(); }, 450); });
-    musicBtn.addEventListener("pointerup", ()=>{ if (pressT) clearTimeout(pressT); });
-    musicBtn.addEventListener("pointerleave", ()=>{ if (pressT) clearTimeout(pressT); });
+    ["pointerup","pointerleave"].forEach(e=>musicBtn.addEventListener(e, ()=>{ if (pressT) clearTimeout(pressT); }));
     vol.addEventListener("input", ()=>{
       ensureAC();
       musicGain.gain.value = Number(vol.value);
@@ -315,28 +317,7 @@
       clear(){ noise(.08,.25); tone(400,.08,"triangle"); }
     };
 
-    /* ========= UI/CONFETTI ========= */
-    const toast = $("toast");
-    function showToast(msg){ toast.textContent = msg; toast.classList.add("show"); setTimeout(()=>toast.classList.remove("show"), 1800); }
-    function escapeHTML(s){return String(s??"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]))}
-    function uiStatus(ok, msg){ status.innerHTML = `<div class="${ok?'ok':'err'}">${msg}</div>`; }
-
-    const burstEmojis = ["🐱","🐾","✨","😺","💖","🌟","🎉"];
-    function burst(x=innerWidth/2,y=90){
-      for(let i=0;i<16;i++){
-        const s=document.createElement("div");
-        s.textContent=burstEmojis[i%burstEmojis.length];
-        s.style.position="fixed"; s.style.fontSize="22px";
-        s.style.left=x+"px"; s.style.top=y+"px"; s.style.pointerEvents="none";
-        s.style.transition="transform .9s ease, opacity .9s ease"; s.style.opacity="1";
-        document.body.appendChild(s);
-        const dx=(Math.random()*2-1)*200, dy=- (100+Math.random()*170), r=(Math.random()*2-1)*50;
-        requestAnimationFrame(()=>{ s.style.transform=`translate(${dx}px, ${dy}px) rotate(${r}deg) scale(1.25)`; s.style.opacity="0"; });
-        setTimeout(()=>s.remove(), 950);
-      }
-    }
-
-    // Faster, denser floating emojis
+    /* Emojis */
     const field = $("field");
     const floaters = ["🐱","🐾","😺","✨","🧶","💫","🪄"];
     function spawnFloater(){
@@ -345,7 +326,7 @@
       e.textContent = floaters[Math.floor(Math.random()*floaters.length)];
       const x = Math.random()*innerWidth;
       const dx = (Math.random()*2-1)*200;
-      const dur = 10 + Math.random()*10; // 10-20s faster
+      const dur = 10 + Math.random()*10; // 10-20s
       e.style.setProperty("--x", x+"px");
       e.style.setProperty("--dx", dx+"px");
       e.style.setProperty("--dur", dur+"s");
@@ -354,9 +335,9 @@
       setTimeout(()=>e.remove(), dur*1000 + 200);
     }
     for(let i=0;i<22;i++) spawnFloater();
-    setInterval(spawnFloater, 700); // faster spawn
+    setInterval(spawnFloater, 700);
 
-    /* ========= DATA + RENDER ========= */
+    /* Data & render */
     const state = { found:0, total:0, game_name:"🐾 Lil Cat Hunt 🐾", hidden_cats:[], history:[] };
     let expanded = false, lastTotal = 0;
 
@@ -388,7 +369,7 @@
       if (isAdmin){
         cats.querySelectorAll("[data-del]").forEach(btn=>{
           btn.onclick = async ()=>{
-            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); sfx.delete(); burst(); }
+            try{ await post({ action:"deleteCat", id: Number(btn.dataset.del) }); sfx.delete(); }
             catch(e){ uiStatus(false, e.message||e); }
           }
         });
@@ -423,7 +404,7 @@
         const color = $("fColor").value, location = $("fLoc").value;
         await post({ action:"found", color, location });
         foundResult.textContent = "Nice! One revealed 🎉";
-        sfx.found(); burst();
+        sfx.found();
       }catch(e){
         uiStatus(false, (e?.message||e));
         foundResult.textContent = "";
@@ -435,7 +416,7 @@
         const color = $("aColor").value, location = $("aLoc").value, name = $("aName").value.trim();
         await post({ action:"addHidden", color, location, name });
         $("aName").value = "";
-        sfx.add(); burst();
+        sfx.add();
       }catch(e){ uiStatus(false, "Add failed: "+(e?.message||e)); }
     });
 
@@ -445,30 +426,32 @@
       catch(e){ uiStatus(false, "Clear failed: "+(e?.message||e)); }
     });
 
-    // Poll every 12s (player only) for "NEW CAT!" toast
+    // Poll (player only) for "NEW CAT!" toast
     setInterval(async ()=>{
       try{
         if (isAdmin) return;
         const data = await get();
         if (typeof lastTotal === "number" && data.total > lastTotal) {
           showToast("✨ Emyl added a new cat!");
-          sfx.add(); burst();
+          sfx.add();
         }
         lastTotal = data.total;
         Object.assign(state, data); render();
       }catch{}
     }, 12000);
 
-    // boot
+    // boot (with visible error if something throws)
     (async ()=>{
       try{
         uiStatus(true,"Connecting to database…");
         const data = await get();
         lastTotal = data.total;
         Object.assign(state, data);
-        uiStatus(true,"Connected ✓");
+        uiStatus(true, isAdmin ? "Connected ✓ (admin)" : "Connected ✓");
         render();
-      }catch(e){ uiStatus(false, "GET error: "+(e?.message||e)); }
+      }catch(e){
+        uiStatus(false, "GET error: "+(e?.message||e));
+      }
     })();
   })();
   </script>
