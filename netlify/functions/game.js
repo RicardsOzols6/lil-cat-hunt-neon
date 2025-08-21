@@ -27,11 +27,9 @@ export async function handler(event) {
 
   try {
     const headers = event.headers || {};
-    // Netlify lowercases header keys
     const headerCode = headers["x-admin-code"] || headers["X-Admin-Code"];
     const qs = event.queryStringParameters || {};
     const adminCandidate = qs.admin || headerCode || "";
-
     const isAdmin = ADMIN_CODE ? adminCandidate === ADMIN_CODE : false;
 
     const sql = neon(CONN);
@@ -91,9 +89,11 @@ export async function handler(event) {
       return rows[0];
     };
 
+    const deepCopy = (o)=>JSON.parse(JSON.stringify(o));
+
     const maskForPlayer = (state) => {
       const HIDDEN = "🫥 Hidden";
-      const s = structuredClone(state);
+      const s = deepCopy(state);
       if (!isAdmin) {
         s.hidden_cats = (s.hidden_cats || []).map(c => c.found ? c : { ...c, name: HIDDEN });
         s.history = (s.history || []).map(h => (h.type === "found+") ? h : { ...h, name: HIDDEN });
@@ -123,7 +123,6 @@ export async function handler(event) {
       const s = await getState();
       normalizeCounts(s);
 
-      // Admin-only
       if (["addHidden","deleteCat","clearHistory","renameGame"].includes(action) && !isAdmin) {
         return err(403, "Admin required");
       }
@@ -166,11 +165,9 @@ export async function handler(event) {
         const { color, location } = body;
         const idx = pickCandidateIndex(s.hidden_cats || [], color, location);
         if (idx === -1) return err(409, "No matching hidden cats. Ask Emyl to add some! 🐱");
-
         const chosen = s.hidden_cats[idx];
         s.hidden_cats[idx] = { ...chosen, found: true, found_at: nowISO() };
         s.history = [{ type:"found+", delta:1, where: chosen.location, color: chosen.color, name: chosen.name, when: nowISO() }, ...(s.history||[])].slice(0,200);
-
         const ns = await saveState(s);
         return ok(maskForPlayer(ns));
       }
